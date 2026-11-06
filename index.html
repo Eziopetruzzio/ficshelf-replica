@@ -41,8 +41,8 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{scrollbar-color:var(--line) transparent;overscroll-behavior:none}
-body{margin:0;font-family:var(--ui);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
+html{scrollbar-color:var(--line) transparent}
+body{margin:0;font-family:var(--ui);background:var(--bg);color:var(--ink);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 button,input,select,textarea{font:inherit;color:inherit}
 a{color:var(--accent)}
@@ -437,13 +437,18 @@ body.has-selbar{padding-bottom:172px}
    on its own full-width row (italic, never truncated), under it a
    row of big full-width buttons («← Libreria», search, «Aa»,
    «Ascolta») — then the chapter picker as a wide box with a double
-   accent border, and the find row under that. Scrolling down
-   slides the whole band away (negative top margin) so the story
-   goes full screen; only the percent readout and the hairline
-   progress bar stay at the bottom, and tapping the percent — or
-   scrolling up a little — brings the band back. The band never
-   hides while Ascolta is playing or a sheet / the find row is
-   open. Colour split, as requested: the chrome — band, buttons,
+   accent border, and the find row under that. The band is an
+   OVERLAY: it floats above the story text (position:absolute at
+   the top of the reader) and takes no space in the page flow, so
+   scrolling down slides it up and away over the text and the
+   story itself never shifts by a pixel; scrolling up a little —
+   or tapping the percent — slides it back down over the text.
+   So the first lines are never covered while the band is shown,
+   the story keeps a blank spacer at its top exactly as tall as
+   the band (the book's top padding, set from JS). Only the
+   percent readout and the hairline progress bar stay at the
+   bottom. The band never hides while Ascolta is playing or a
+   sheet / the find row is open. Colour split, as requested: the chrome — band, buttons,
    Aa sheet, percent, progress bar — always follows the home-page
    theme variables; only the story area (its page background and
    the story text) follows the reader's own Carta / Seppia / Notte
@@ -462,7 +467,8 @@ html.fic-standalone #libraryView,html.fic-standalone .top,html.fic-standalone .f
 .fic-missing-card p{margin:0 0 20px;color:var(--ink-2);font-size:15.5px;line-height:1.55}
 .fic-missing-card .btn{width:100%;justify-content:center;padding:13px;font-size:16px}
 .reader{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;background:var(--accent-soft)}
-.reader-head{flex:0 0 auto;background:var(--accent-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:10px 12px 12px;transition:margin-top .28s ease}
+.reader-head{position:absolute;top:0;left:0;right:0;z-index:5;background:var(--accent-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:10px 12px 12px;box-shadow:0 10px 24px rgba(30,5,20,.16);transform:translateY(0);transition:transform .34s ease}
+.reader-head.away{transform:translateY(-106%);box-shadow:none}
 .reader-bar{display:flex;align-items:stretch;gap:8px}
 .rbtn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);cursor:pointer;font-size:15px;font-weight:500;white-space:nowrap}
 .rbtn:hover{border-color:var(--accent)}
@@ -557,9 +563,15 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
 #openSources{padding:7px 11px;white-space:nowrap}
 .theme-btn{padding:7px 10px}
 .search input{min-width:0;width:100%}
-/* inner scrollers keep their scroll to themselves: swiping back up
-   inside a panel must never chain to the page (pull-to-refresh) */
-.sb-body,.drawer,.modal,.reader-scroll,.theme-grid{overscroll-behavior:contain}
+/* inner scrollers of open sheets / popups keep their scroll to
+   themselves: swiping inside a sheet must scroll the sheet, not
+   chain to the page. The page itself and the reader's story
+   scroller are NOT in this list on purpose: their overscroll
+   chains to Chrome, so the normal pull-down-from-the-top gesture
+   refreshes the page (and picks up site updates) — an accidental
+   refresh loses nothing, the library lives in IndexedDB and
+   ?fic= tabs restore themselves */
+.sb-body,.drawer,.modal,.theme-grid{overscroll-behavior:contain}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 
 /* ---------- responsive fluido: telefono prima di tutto ----------
@@ -829,7 +841,7 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
     <div class="aa-sec"><span class="aa-lbl">Lingua della storia</span><select class="lsel" id="listenLang" aria-label="Lingua della lettura ad alta voce"></select></div>
     <div class="aa-sec"><span class="aa-lbl">Voce</span><select class="lsel" id="listenVoice" aria-label="Voce della lettura ad alta voce"></select></div>
     <div class="aa-sec"><button class="btn ghost" id="listenRestart" type="button">↺ Ricomincia dall’inizio</button></div>
-    <p class="listen-note">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi il lettore, alla riapertura si riparte da lì.</p>
+    <p class="listen-note">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi il lettore, alla riapertura si riparte da lì. Se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana.</p>
   </div>
 </div>
 
@@ -2022,7 +2034,8 @@ function buildReaderDoc(g,startPct){
   const css=
    "body{margin:0;font-family:-apple-system,'Segoe UI',Arial,sans-serif;background:#fffafc;color:#3d3d3d}"+
    "button,select{font:inherit}"+
-   ".head{position:sticky;top:0;z-index:9;background:"+T.accSoft+";color:"+T.ink+";border-bottom:1px solid "+T.line+";padding:10px 12px 12px;transition:margin-top .28s ease}"+
+   ".head{position:fixed;top:0;left:0;right:0;z-index:8;background:"+T.accSoft+";color:"+T.ink+";border-bottom:1px solid "+T.line+";padding:10px 12px 12px;box-shadow:0 10px 24px rgba(30,5,20,.16);transform:translateY(0);transition:transform .34s ease}"+
+   ".head.away{transform:translateY(-106%);box-shadow:none}"+
    ".trow{display:block;font-family:Lora,Georgia,serif;font-style:italic;font-weight:600;text-align:center;font-size:19px;line-height:1.3;overflow-wrap:break-word;margin:0 2px 9px}"+
    ".bar{display:flex;gap:8px;align-items:stretch}"+
    ".bar .btn{flex:1 1 0;min-width:0;display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:9px 8px;font-size:15.5px}"+
@@ -2084,10 +2097,11 @@ function buildReaderDoc(g,startPct){
    "addEventListener('scroll',upd,{passive:true});addEventListener('beforeunload',function(){send(prog())});"+
    "var headEl=document.querySelector('.head'),chHidden=false,chLastY=null;"+
    "function chBusy(){return (typeof TT!=='undefined'&&TT.playing)||!pop.hidden||!lPop.hidden||!iPop.hidden||fForm.classList.contains('open')}"+
-   "function chSet(h){if(h&&chBusy())return;if(h===chHidden)return;chHidden=h;headEl.style.marginTop=h?('-'+headEl.offsetHeight+'px'):''}"+
+   "function chSet(h){if(h&&chBusy())return;if(h===chHidden)return;chHidden=h;headEl.classList.toggle('away',h)}"+
    "addEventListener('scroll',function(){var y=scrollY;if(chLastY===null){chLastY=y;return}var dy=y-chLastY;if(chBusy()){if(chHidden)chSet(false);chLastY=y;return}if(y<4){if(chHidden)chSet(false)}else if(dy>3&&y>40)chSet(true);else if(dy<-3)chSet(false);if(dy>3||dy<-3||y<4)chLastY=y},{passive:true});"+
    "pctEl.addEventListener('click',function(){if(chHidden){chSet(false);chLastY=scrollY}});"+
-   "addEventListener('resize',function(){if(chHidden)headEl.style.marginTop='-'+headEl.offsetHeight+'px'});"+
+   "function padBook(){var hh=headEl.offsetHeight+16;book.style.paddingTop=hh+'px';document.querySelectorAll('.chap').forEach(function(s){s.style.scrollMarginTop=(hh+2)+'px'})}"+
+   "addEventListener('resize',padBook);addEventListener('load',padBook);padBook();"+
    "if(startPct>0){addEventListener('load',function(){var h=document.documentElement;scrollTo(0,startPct*(h.scrollHeight-innerHeight));upd()})}else{upd()}"+
    "document.getElementById('chapSel').addEventListener('change',function(){var s=document.querySelectorAll('.chap')[+this.value];if(s)s.scrollIntoView()});"+
    "document.getElementById('back').addEventListener('click',function(){send(prog());window.close()});"+
@@ -2110,7 +2124,7 @@ function buildReaderDoc(g,startPct){
    "document.getElementById('hideFmt').addEventListener('change',function(){book.classList.toggle('plain',this.checked)});"+
    "document.getElementById('aaReset').addEventListener('click',function(){fs=18;setFs();book.style.fontFamily='';book.style.lineHeight='';book.style.textAlign='';book.dataset.ps='2';document.body.classList.remove('sepia');document.body.classList.remove('dark');document.body.classList.remove('nomargins');book.classList.remove('plain');book.classList.remove('wide');book.classList.remove('full');var hf=document.getElementById('hideFmt');if(hf)hf.checked=false;var defs={font:'serif',lh:'1.75',align:'justify',ps:'2',margins:'on',rw:'narrow',rt:'light'};document.querySelectorAll('[data-set]').forEach(function(b){b.classList.toggle('on',defs[b.dataset.set]===b.dataset.val)})});"+
    "var hits=[],hi=-1;var fForm=document.getElementById('findForm'),fQ=document.getElementById('findQ'),fC=document.getElementById('findCount');"+
-   "document.getElementById('findToggle').addEventListener('click',function(){fForm.classList.toggle('open');if(fForm.classList.contains('open'))fQ.focus()});"+
+   "document.getElementById('findToggle').addEventListener('click',function(){fForm.classList.toggle('open');padBook();if(fForm.classList.contains('open'))fQ.focus()});"+
    "function clearHits(){hits.forEach(function(m){var p=m.parentNode;if(p){p.replaceChild(document.createTextNode(m.textContent),m);p.normalize()}});hits=[];hi=-1;fC.textContent=''}"+
    "function doFind(){clearHits();var q=fQ.value.trim();if(!q)return;var walker=document.createTreeWalker(book,NodeFilter.SHOW_TEXT);var nodes=[];while(walker.nextNode())nodes.push(walker.currentNode);"+
    "nodes.forEach(function(n){var txt=n.textContent,low=txt.toLowerCase(),ql=q.toLowerCase(),idx=0,frag=document.createDocumentFragment(),last=0;var found=false;while((idx=low.indexOf(ql,last))>=0){found=true;frag.appendChild(document.createTextNode(txt.slice(last,idx)));var mk=document.createElement('mark');mk.textContent=txt.substr(idx,q.length);frag.appendChild(mk);hits.push(mk);last=idx+q.length}if(found){frag.appendChild(document.createTextNode(txt.slice(last)));n.parentNode.replaceChild(frag,n)}});"+
@@ -2151,7 +2165,8 @@ function buildReaderDoc(g,startPct){
    "function lSpeak(i){if(!TT.playing)return;var seg=TT.segs[i];if(!seg){lFinish();return}TT.idx=i;LPOS={c:seg.chap,s:seg.ci};lSave();lHighlight(seg);try{seg.el.scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}var cs=document.getElementById('chapSel');if(cs&&+cs.value!==seg.chap)cs.value=seg.chap;lUpd(seg);var u=new SpeechSynthesisUtterance(seg.text);u.lang=TT.lang||lTag();if(TT.voice)u.voice=TT.voice;u.rate=TT.rate;u.onend=function(){if(TT.playing&&!TT.paused)lSpeak(i+1)};u.onerror=function(e){if(e.error==='interrupted'||e.error==='canceled')return;if(TT.playing&&!TT.paused)lSpeak(i+1)};try{speechSynthesis.speak(u)}catch(e){lSpeak(i+1)}}"+
    "function lStartIdx(){if(LPOS){var i,j;for(i=0;i<TT.segs.length;i++)if(TT.segs[i].chap===LPOS.c&&TT.segs[i].ci===LPOS.s)return i;for(j=0;j<TT.segs.length;j++)if(TT.segs[j].chap>LPOS.c)return j}return 0}"+
    "function lApply(){var ls=document.getElementById('lLang'),vs=document.getElementById('lVoice');LLANG=ls?ls.value||'':'';LVOICE=vs?vs.value||'':'';TT.lang=LLANG;TT.voice=null;var all=lVoices();for(var i=0;i<all.length;i++)if(all[i].voiceURI===LVOICE)TT.voice=all[i];lSave()}"+
-   "function lPlay(){if(!lSup()){lMsg();return}if(TT.playing&&TT.paused){TT.paused=false;try{speechSynthesis.resume()}catch(e){}lWl(true);lTimer(true);lUpd();return}lApply();if(!TT.segs.length){TT.segs=lSegs();TT.idx=lStartIdx()}if(!TT.segs.length){var b=document.getElementById('lMsg');b.hidden=false;b.textContent='In questa storia non c\\'è testo da leggere ad alta voce.';return}try{speechSynthesis.cancel()}catch(e){}TT.playing=true;TT.paused=false;lWl(true);lTimer(true);lUpd();var i=TT.idx;setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(i)},90)}"+
+   "function lTransLang(){var p=(document.documentElement.lang||'').toLowerCase().split('-')[0],s=lTag().split('-')[0];if(!p||p===s)return'';var langs=[],vs=lVoices();vs.forEach(function(v){if(v.lang&&langs.indexOf(v.lang)<0)langs.push(v.lang)});var cand=langs.filter(function(l){return l.toLowerCase().split('-')[0]===p});if(!cand.length)return p;var pref={en:'en-US',it:'it-IT',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-BR',ja:'ja-JP'}[p];if(pref&&cand.indexOf(pref)>=0)return pref;return cand[0]}"+
+   "function lPlay(){if(!lSup()){lMsg();return}if(TT.playing&&TT.paused){TT.paused=false;try{speechSynthesis.resume()}catch(e){}lWl(true);lTimer(true);lUpd();return}lApply();TT.segs=lSegs();TT.idx=lStartIdx();var tl=lTransLang();if(tl){TT.lang=tl;TT.voice=null;var all=lVoices();for(var vi=0;vi<all.length;vi++)if(all[vi].lang===tl){TT.voice=all[vi];break}var lsx=document.getElementById('lLang');if(lsx){for(var oi=0;oi<lsx.options.length;oi++)if(lsx.options[oi].value===tl)lsx.value=tl}}if(!TT.segs.length){var b=document.getElementById('lMsg');b.hidden=false;b.textContent='In questa storia non c\\'è testo da leggere ad alta voce.';return}try{speechSynthesis.cancel()}catch(e){}TT.playing=true;TT.paused=false;lWl(true);lTimer(true);lUpd();var i=TT.idx;setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(i)},90)}"+
    "function lPause(){if(!TT.playing)return;TT.paused=true;try{speechSynthesis.pause()}catch(e){}lWl(false);lTimer(false);lUpd()}"+
    "function lStop(){if(TT.playing&&TT.segs[TT.idx]){LPOS={c:TT.segs[TT.idx].chap,s:TT.segs[TT.idx].ci};lSave()}TT.playing=false;TT.paused=false;try{speechSynthesis.cancel()}catch(e){}lClearHl();lWl(false);lTimer(false);lUpd()}"+
    "function lFinish(){TT.playing=false;TT.paused=false;LPOS=null;lSave();lClearHl();lWl(false);lTimer(false);lUpd();var st=document.getElementById('lStatus');if(st)st.textContent='Fine della storia'}"+
@@ -2202,12 +2217,12 @@ function buildReaderDoc(g,startPct){
    '<div class="sec"><span class="lbl">Lingua della storia</span><select class="lsel" id="lLang" aria-label="Lingua della lettura ad alta voce"></select></div>'+
    '<div class="sec"><span class="lbl">Voce</span><select class="lsel" id="lVoice" aria-label="Voce della lettura ad alta voce"></select></div>'+
    '<div class="sec"><button class="btn" id="lRestart" type="button">↺ Ricomincia dall\'inizio</button></div>'+
-   '<p class="lnote">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi la scheda, alla riapertura si riparte da lì. Storia in un\'altra lingua? Per tradurla apri il menu ⋮ di Chrome e tocca «Traduci pagina».</p>'+
+   '<p class="lnote">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi la scheda, alla riapertura si riparte da lì. Storia in un\'altra lingua? Per tradurla apri il menu ⋮ di Chrome e tocca «Traduci pagina». Se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana.</p>'+
    "</div>"+
    '<div class="pop" id="infoPop" hidden>'+
    '<span class="grab" aria-hidden="true"></span>'+
    '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><b>Come funziona il lettore</b><button class="btn" id="infoClose" type="button" aria-label="Chiudi la spiegazione">✕</button></div>'+
-   '<p style="font-size:14px;line-height:1.55;color:'+T.ink2+';margin:8px 0 0">Il punto di lettura si salva da solo mentre scorri: chiudi pure la scheda, quando riapri la storia riprendi da dove eri. Con <b>Aa</b> cambi carattere, dimensione e interlinea; <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia, mentre la barra e le impostazioni seguono il tema scelto nella schermata home. Il menu dei capitoli salta a un capitolo; la lente cerca una parola nel testo. In basso a destra la percentuale dice quanto hai letto, e la barretta sottile in fondo avanza mentre scorri. Con <b>Ascolta</b> la storia viene letta ad alta voce dalla voce del telefono, frase per frase e capitolo dopo capitolo, con play, pausa, stop e velocità: la frase in corso si evidenzia, lo schermo resta acceso mentre ascolti e il punto di ascolto si salva da solo, così alla riapertura si riparte da lì. La voce segue la lingua della storia e nel pannello Ascolta puoi cambiarla. Per tradurre una storia in un\'altra lingua usa invece il menu ⋮ di Chrome → «Traduci pagina».</p>'+
+   '<p style="font-size:14px;line-height:1.55;color:'+T.ink2+';margin:8px 0 0">Il punto di lettura si salva da solo mentre scorri: chiudi pure la scheda, quando riapri la storia riprendi da dove eri. Con <b>Aa</b> cambi carattere, dimensione e interlinea; <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia, mentre la barra e le impostazioni seguono il tema scelto nella schermata home. Il menu dei capitoli salta a un capitolo; la lente cerca una parola nel testo. In basso a destra la percentuale dice quanto hai letto, e la barretta sottile in fondo avanza mentre scorri. Con <b>Ascolta</b> la storia viene letta ad alta voce dalla voce del telefono, frase per frase e capitolo dopo capitolo, con play, pausa, stop e velocità: la frase in corso si evidenzia, lo schermo resta acceso mentre ascolti e il punto di ascolto si salva da solo, così alla riapertura si riparte da lì. La voce segue la lingua della storia e nel pannello Ascolta puoi cambiarla. Per tradurre una storia in un\'altra lingua usa invece il menu ⋮ di Chrome → «Traduci pagina»: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana.</p>'+
    "</div>"+
    "<script>"+js+ttsJs+"<\/script></body></html>";
   return html;
@@ -2297,8 +2312,9 @@ function openReaderInPage(g){
      offers «Traduci pagina» from its ⋮ menu */
   $("#book").setAttribute("lang",storyLangTag(g));
   $("#reader").hidden=false; document.body.style.overflow="hidden";
+  syncReaderPad();
   const sc=$("#readerScroll");
-  requestAnimationFrame(()=>{const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=(g.progress||0)*max; updReaderProgress()});
+  requestAnimationFrame(()=>{syncReaderPad(); const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=(g.progress||0)*max; updReaderProgress()});
 }
 function updReaderProgress(){
   const sc=$("#readerScroll"); const max=sc.scrollHeight-sc.clientHeight;
@@ -2498,7 +2514,7 @@ const INFO={
   step3:{t:"Decidi tu, resta a te",b:"<p>Tutto resta salvato in modo permanente nel tuo browser: anche chiudendo tutte le schede, lo ritrovi alla prossima apertura. Per sicurezza, ogni tanto salva una copia con il pulsante <b>Salva copia</b> in fondo alla pagina e conservala su Drive o su WhatsApp: con <b>Ripristina copia</b> ritrovi tutto anche su un telefono nuovo.</p>"},
   backup:{t:"Copia di sicurezza",b:"<p>Con <b>Salva copia</b> scarichi un unico file con tutto: le storie e i loro file originali, il punto di lettura di ognuna, preferite, stato, voti, note, scaffali, il tema scelto e la selezione in corso. Con <b>Ripristina copia</b> scegli quel file e ritrovi tutto com’era.</p><p>Onestamente: i dati restano normalmente salvati anche chiudendo Chrome e spegnendo il telefono, ma <b>non è garantito al 100%</b>. Se cancelli i dati di navigazione, oppure il telefono finisce lo spazio, Chrome o Android possono cancellare anche i dati di questo sito. Per stare tranquilla, salva una copia ogni tanto e conservala fuori dal browser: su Google Drive, oppure inviala a te stessa su WhatsApp.</p>"},
   drawer:{t:"Dettagli della storia",b:"<p>Da qui: <b>Leggi</b> apre la storia qui, in questa stessa scheda, al posto della libreria (con «← Libreria» torni indietro); <b>Apri in un’altra scheda</b> la apre invece in una nuova scheda di Chrome, e la libreria resta dov’è. In entrambi i casi riprendi dal punto di lettura salvato. <b>Scarica il file</b> salva il file originale sul telefono, e sotto puoi cambiare stato e scaffali, dare un voto, scrivere la data di lettura e le tue note.</p><p>Se scrivi una nota, la storia compare anche nello scaffale <b>Segnalibri</b>. Con <b>Modifica dettagli</b> correggi titolo e autrice; <b>Rimuovi dalla libreria</b> cancella la storia da qui.</p>"},
-  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Il menu a tendina sotto il titolo salta a un capitolo; la lente cerca una parola nel testo.</p><p>In basso a destra la percentuale dice quanto hai letto, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi: quando riapri la storia, riprendi da dove eri.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>.</p>"},
+  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Il menu a tendina sotto il titolo salta a un capitolo; la lente cerca una parola nel testo.</p><p>In basso a destra la percentuale dice quanto hai letto, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi: quando riapri la storia, riprendi da dove eri.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana.</p>"},
   help:{t:"Come si usa, passo passo",b:"<ol><li>Tocca <b>Aggiungi</b> in alto (su telefono) oppure <b>Link Drive / Carica file</b>.</li><li>Per caricare una storia che hai sul telefono: tocca il riquadro tratteggiato e scegli il file (EPUB, PDF, HTML, TXT, MOBI, AZW3, oppure il file <b>.mht</b> salvato da Chrome).</li><li>Per un link Google Drive: incolla il link nella casella in alto e tocca <b>Aggiungi</b>.</li><li>La storia compare sullo scaffale. Toccala per vedere i dettagli, poi tocca <b>Leggi</b> per leggerla qui, in questa scheda, oppure <b>Apri in un’altra scheda</b> per aprirla in una nuova scheda di Chrome, così lo scaffale resta dov’è.</li><li>Quando torni sullo scaffale, la barra rosa sotto la storia ti dice a che punto eri arrivata: riaprendola, riprendi da lì.</li><li>Con <b>Seleziona</b> scegli più storie insieme: toccale per selezionarle (si evidenziano), poi con la barra in basso cambi stato o scaffale, le metti tra le preferite o le togli, oppure le rimuovi tutte in una volta. Ogni azione ti conferma cosa ha fatto, e la selezione resta salvata anche se ricarichi la pagina.</li></ol><p><b>Se qualcosa non funziona</b>, gli screenshot utili sono 4: (1) lo scaffale con le storie caricate, (2) la finestrella «Aggiungi un link Drive o carica le storie» aperta, (3) il messaggio di errore esatto, parola per parola, (4) la pagina di lettura aperta. Per fare uno screenshot: tasti <b>Accensione + Volume giù</b> insieme per un secondo. La registrazione schermo si avvia dal pannello che scende dall’alto (icona «Registrazione schermo»), poi rifai i passi che non funzionano e fermala: 20–30 secondi bastano.</p>"}
 };
 function showInfo(key){
@@ -2798,8 +2814,12 @@ $("#readerScroll").addEventListener("scroll",()=>{if(R.id)updReaderProgress()});
    brings the band back, and so does tapping the percent. The band
    NEVER hides while Ascolta is playing (the spoken sentence must
    stay reachable) or while the Aa / Ascolta sheets or the find row
-   are open. Hiding is a negative top margin on the head, transitioned
-   in CSS, so the story area simply grows — no layout jump. */
+   are open. The band is an overlay floating above the text: hiding
+   and showing only translate it up/down over the story, the text
+   underneath never moves. A blank spacer as tall as the band sits
+   at the top of the story (the book's top padding), so when the
+   band is visible it rests in that spacer instead of covering the
+   first lines. */
 let chromeHidden=false, chromeLastY=null;
 function chromeBusy(){
   return (typeof TTS!=="undefined"&&TTS.playing)||
@@ -2810,12 +2830,19 @@ function setChromeHidden(h){
   if(h&&chromeBusy())return;
   if(h===chromeHidden)return;
   chromeHidden=h;
-  const head=$(".reader-head");
-  head.style.marginTop=h?("-"+head.offsetHeight+"px"):"";
+  $(".reader-head").classList.toggle("away",h);
 }
 function resetReaderChrome(){
   chromeHidden=false; chromeLastY=null;
-  const head=$(".reader-head"); if(head)head.style.marginTop="";
+  const head=$(".reader-head"); if(head)head.classList.remove("away");
+}
+/* keep the story's top spacer exactly as tall as the overlay band
+   (plus a small breathing gap), so the band — when visible — sits
+   in the spacer and never covers the story's first lines */
+function syncReaderPad(){
+  const head=$(".reader-head"),book=$("#book");
+  if(!head||!book)return;
+  book.style.paddingTop=(head.offsetHeight+16)+"px";
 }
 $("#readerScroll").addEventListener("scroll",()=>{
   const sc=$("#readerScroll"), y=sc.scrollTop;
@@ -2830,8 +2857,8 @@ $("#readerScroll").addEventListener("scroll",()=>{
   if(dy>3||dy<-3||y<4)chromeLastY=y;
 },{passive:true});
 $("#readerPct").addEventListener("click",()=>{ if(chromeHidden){ setChromeHidden(false); chromeLastY=$("#readerScroll").scrollTop; } });
-addEventListener("resize",()=>{ if(chromeHidden){ const head=$(".reader-head"); head.style.marginTop="-"+head.offsetHeight+"px"; } });
-$("#chapterSel").addEventListener("change",e=>{const s=$("#book").querySelector('[data-i="'+e.target.value+'"]');if(s){const sc=$("#readerScroll");sc.scrollTop+=s.getBoundingClientRect().top-sc.getBoundingClientRect().top-4}});
+addEventListener("resize",()=>syncReaderPad());
+$("#chapterSel").addEventListener("change",e=>{const s=$("#book").querySelector('[data-i="'+e.target.value+'"]');if(s){const sc=$("#readerScroll");sc.scrollTop+=s.getBoundingClientRect().top-sc.getBoundingClientRect().top-($(".reader-head").offsetHeight+8)}});
 /* page colour recolours ONLY the story area (its background and the
    story text, percent readout included); the chrome band and the Aa
    sheet keep the home-page theme colours */
@@ -2872,7 +2899,7 @@ $("#aaResetBtn").addEventListener("click",()=>{
   const defs={font:"serif",lh:"1.75",align:"left",rt:"light",rw:"narrow"};
   $$("#aaPop [data-set]").forEach(b=>b.classList.toggle("on",defs[b.dataset.set]===b.dataset.val));
 });
-$("#findToggle").addEventListener("click",()=>{$("#findForm").classList.toggle("open");if($("#findForm").classList.contains("open"))$("#findQ").focus()});
+$("#findToggle").addEventListener("click",()=>{$("#findForm").classList.toggle("open");syncReaderPad();if($("#findForm").classList.contains("open"))$("#findQ").focus()});
 let findHits=[],findIdx=-1;
 function clearFind(){findHits.forEach(m=>{const p=m.parentNode;if(p){p.replaceChild(document.createTextNode(m.textContent),m);p.normalize()}});findHits=[];findIdx=-1;$("#findCount").textContent=""}
 function goHit(i){if(!findHits.length)return;findIdx=(i+findHits.length)%findHits.length;findHits.forEach((m,j)=>m.classList.toggle("cur",j===findIdx));findHits[findIdx].scrollIntoView({block:"center"});$("#findCount").textContent=(findIdx+1)+" di "+findHits.length}
@@ -2906,9 +2933,13 @@ $("#findPrev").addEventListener("click",()=>goHit(findIdx-1));
    on screen; the listening point is saved on the fic itself
    (g.listenPos = {c: chapter, s: sentence in that chapter}), so it
    persists in IndexedDB and travels in the backup like the reading
-   point. The voice follows the STORY's language (the EPUB's
-   fic.language), never the Italian interface; the per-story manual
-   choice lives in g.listenLang / g.listenVoice. The title page
+   point. The voice follows the language of the text ON SCREEN:
+   normally the STORY's language (the EPUB's fic.language), never
+   the Italian interface — but if the reader translated the page
+   with Chrome, the segments are rebuilt from the translated page
+   at play time and the voice switches to the translation's
+   language (see visibleTextDiffers / translatedLang). The
+   per-story manual choice lives in g.listenLang / g.listenVoice. The title page
    (Series / Category / Genre metadata) is never read: listening
    starts at the real story. While listening, the screen is kept
    awake with a Wake Lock, released on pause / stop / close. */
@@ -2945,6 +2976,43 @@ function ttsDefaultLang(g,langs){
   if(pref&&cand.indexOf(pref)>=0)return pref;
   const full=storyLangTag(g); if(cand.indexOf(full)>=0)return full;
   return cand[0];
+}
+function pickLangFor(primary,langs){
+  const cand=langs.filter(l=>l.toLowerCase().split("-")[0]===primary);
+  if(!cand.length)return"";
+  const pref={en:"en-US",it:"it-IT",fr:"fr-FR",es:"es-ES",de:"de-DE",pt:"pt-BR",ja:"ja-JP"}[primary];
+  if(pref&&cand.indexOf(pref)>=0)return pref;
+  return cand[0];
+}
+/* Chrome's «Traduci pagina» rewrites the text ON SCREEN: the words
+   in the page are no longer the stored ones. Ascolta must read
+   what the reader sees, so at every fresh start the segments are
+   rebuilt from the live page (buildSegs reads the DOM), and this
+   probe tells whether the visible text still matches the stored
+   story: a slice of the stored text that no longer appears on
+   screen means the page has been translated (or otherwise
+   rewritten) since it was rendered */
+function visibleTextDiffers(g){
+  const secs=$("#book").querySelectorAll("section");
+  for(const sec of secs){
+    const ch=(g.chapters||[])[+sec.dataset.i]; if(!ch)continue;
+    const stored=stripTags(ch.html).replace(/\s+/g," ").trim();
+    if(stored.length<60)continue;
+    const dom=sec.textContent.replace(/\s+/g," ");
+    return dom.indexOf(stored.slice(15,75))<0;
+  }
+  return false;
+}
+/* when the page has been translated, the language to speak is the
+   translation's language: Chrome writes it into the document's
+   lang attribute. If that cannot be told apart from the story's
+   own language, return "" and the panel's chosen language rules */
+function translatedLang(g){
+  if(!visibleTextDiffers(g))return"";
+  const primary=(document.documentElement.lang||"").toLowerCase().split("-")[0];
+  if(!primary||primary===storyLangTag(g).split("-")[0])return"";
+  const langs=[...new Set(ttsVoices().map(v=>v.lang).filter(Boolean))];
+  return pickLangFor(primary,langs)||primary;
 }
 function fillVoiceSel(lang,g){
   const vs=ttsVoices().filter(v=>v.lang===lang);
@@ -3097,7 +3165,25 @@ function ttsPlay(){
     ttsWl(true); ttsTimer(true); updListenUI(); return;
   }
   ttsApplyChoice();
-  if(TTS.ficId!==g.id||!TTS.segs.length){TTS.segs=buildSegs(g); TTS.ficId=g.id; TTS.idx=ttsStartIdx(g)}
+  /* the segments are rebuilt from the page AS IT IS NOW, every
+     time: if Chrome has translated the story on screen since the
+     reader opened, this is the translated text that gets read,
+     not the stored original */
+  TTS.segs=buildSegs(g); TTS.ficId=g.id; TTS.idx=ttsStartIdx(g);
+  /* and the voice follows the language of the text on screen: a
+     page translated by Chrome is read in the translation's
+     language (Italian, when Chrome translated into Italian),
+     with the best voice the phone has for it; the panel below
+     shows the switch, the saved per-story choice is untouched */
+  const tl=translatedLang(g);
+  if(tl){
+    TTS.lang=tl;
+    if(!TTS.voice||TTS.voice.lang!==tl)TTS.voice=ttsVoices().find(v=>v.lang===tl)||null;
+    const ls=$("#listenLang");
+    if(ls&&[...ls.options].some(o=>o.value===tl))ls.value=tl;
+    fillVoiceSel(tl,g);
+    const vsel=$("#listenVoice"); if(vsel)vsel.value=TTS.voice?TTS.voice.voiceURI:"";
+  }
   if(!TTS.segs.length){const b=$("#listenMsg"); b.hidden=false; b.textContent="In questa storia non c’è testo da leggere ad alta voce."; return}
   clearFind();
   try{speechSynthesis.cancel()}catch(e){}
