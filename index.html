@@ -459,10 +459,14 @@ body.has-selbar{padding-bottom:172px}
 /* ---------- reader (in-page fallback) ----------
    Modelled on the reference reader the user supplied: a chrome
    band across the top in the site theme colours — the story title
-   on its own full-width row (italic, never truncated), under it a
-   row of big full-width buttons («← Libreria», search, «Aa»,
-   «Ascolta») — then the chapter picker as a wide box with a double
-   accent border, and the find row under that. The band is an
+   on its own full-width row (italic, never truncated), under it
+   the action row ordered by importance (quiet «← Libreria» text
+   button, one uniform group of search / «Aa» / bookmarks, and
+   «Ascolta» filled in the theme accent as the only primary
+   button) — then the chapter pager as one compact centred row
+   (‹, numbers with …, ›, «Capitolo X di Y» and «Vai al capitolo»
+   inline; repeated under the chapter text at the bottom), and
+   the find row under that. The band is an
    OVERLAY: it floats above the story text (position:absolute at
    the top of the reader) and takes no space in the page flow, so
    scrolling down slides it up and away over the text and the
@@ -494,16 +498,22 @@ html.fic-standalone #libraryView,html.fic-standalone .top,html.fic-standalone .f
 .reader{position:fixed;inset:0;z-index:110;display:flex;flex-direction:column;background:var(--accent-soft)}
 .reader-head{position:absolute;top:0;left:0;right:0;z-index:5;background:var(--accent-soft);color:var(--ink);border-bottom:1px solid var(--line);padding:10px 12px 12px;box-shadow:0 10px 24px rgba(30,5,20,.16);transform:translateY(0);transition:transform .34s ease}
 .reader-head.away{transform:translateY(-106%);box-shadow:none}
-.reader-bar{display:flex;align-items:stretch;gap:6px}
+/* action row, ordered by importance (Material 3 top-app-bar
+   hierarchy): «← Libreria» is a quiet text button on the left; the
+   three secondary actions (search, Aa, bookmarks) form one compact
+   uniform group — same height (48px touch target), same width,
+   same radius, even gaps; «Ascolta» stands apart on the right as
+   the ONLY filled button, in the theme accent, so the primary
+   action is the one thing the eye lands on */
+.reader-bar{display:flex;align-items:center;gap:7px}
 .rbtn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);cursor:pointer;font-size:15px;font-weight:500;white-space:nowrap}
 .rbtn:hover{border-color:var(--accent)}
 .rbtn.plain{border-color:transparent;background:transparent}
-.reader-bar .rbtn{flex:1 1 0;min-width:0;justify-content:center;min-height:48px;padding:9px 8px;font-size:15.5px}
-.reader-bar #readerBack{flex:1.15 1 0}
-.reader-bar #findToggle{flex:.45 1 0}
-.reader-bar #aaBtn{flex:.8 1 0}
-.reader-bar #bmkBtn{flex:.45 1 0}
-.reader-bar .listen-pill{flex:1.3 1 0}
+.reader-bar .rbtn{min-height:48px;font-size:15.5px}
+.reader-bar #readerBack{flex:0 0 auto;background:transparent;border-color:transparent;font-weight:600;padding:9px 6px 9px 0}
+.reader-bar #readerBack:hover{color:var(--accent);border-color:transparent}
+.reader-bar #findToggle,.reader-bar #aaBtn,.reader-bar #bmkBtn{flex:1 1 0;min-width:42px;justify-content:center;padding:9px 6px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.reader-bar .listen-pill{flex:0 0 auto;background:var(--accent);border-color:var(--accent)}
 /* the story title sits on its own full-width row above the button
    row, so it is never squeezed or truncated between the buttons */
 .reader-title{display:block;font-family:var(--read);font-style:italic;text-align:center;font-weight:600;font-size:19px;line-height:1.3;overflow-wrap:break-word;color:var(--ink);margin:0 2px 9px}
@@ -511,14 +521,36 @@ html.fic-standalone #libraryView,html.fic-standalone .top,html.fic-standalone .f
 .chap-wrap{position:relative}
 .chap-wrap select{width:100%;height:54px;padding:0 42px 0 16px;border:2px solid var(--accent);border-radius:12px;background:var(--panel);color:var(--ink);font-size:17px;box-shadow:inset 0 0 0 2px var(--panel),inset 0 0 0 4px var(--accent);appearance:none;-webkit-appearance:none;cursor:pointer}
 .chap-wrap>svg{position:absolute;right:15px;top:50%;transform:translateY(-50%);color:var(--accent);pointer-events:none}
+/* chapter pagination: one page per chapter, Google-style bar like
+   the home pager — ‹, numbers with …, ›, current highlighted, plus
+   a typed «Vai al capitolo». The same bar is rendered at the top
+   (inside the chrome band) and again under the chapter text at the
+   bottom of the scroll, so the next chapter is one tap away at the
+   end of the page too. Hidden entirely for single-chapter stories */
+.chap-pager{margin-top:9px}
+.chap-pager[hidden]{display:none!important}
+/* one compact centred row: ‹ numbers ›, the «Capitolo X di Y»
+   label small beside them, and «Vai al capitolo» inline (small
+   box + Vai) instead of a whole row of its own; on a narrow phone
+   the row wraps gracefully onto two centred lines */
+.chap-pager-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:5px 14px}
+.chap-pager .pager{gap:5px;flex-wrap:nowrap}
+.chap-pager .pager-btn{min-width:36px;height:36px;padding:0 8px;font-size:14px}
+.chap-pager .pager-jump{margin-top:0;font-size:13px;flex-wrap:nowrap}
+.chap-pager .pager-jump input{width:56px;padding:5px 6px;font-size:13.5px}
+.chap-pager .pager-jump .btn{padding:5px 11px;font-size:13px}
+.chap-cur-title{display:inline;font-size:13px;color:var(--ink-2);overflow-wrap:break-word;line-height:1.35}
+.chap-pager-bottom{max-width:700px;margin:0 auto;padding:2px 22px 10px}
+.chap-pager-bottom.wide{max-width:860px}.chap-pager-bottom.full{max-width:none}
+.chap-pager-bottom .chap-cur-title{color:inherit;opacity:.75}
 .reader-find{display:none;gap:8px;align-items:center;margin-top:10px}
 .reader-find.open{display:flex}
 .reader-find input{flex:1;min-width:0;padding:11px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font-size:16px;outline:none}
 .reader-find input:focus{border-color:var(--accent)}
 .find-count{font-size:14px;color:var(--ink-2);white-space:nowrap}
 .find-nav{border:none;background:none;color:var(--accent);font-size:19px;line-height:1;cursor:pointer;padding:6px 4px}
-.reader-scroll{flex:1;overflow-y:auto;background:#fffafc}
-.book{max-width:700px;margin:0 auto;padding:26px 22px 110px;font-family:var(--read);font-size:18px;line-height:1.75;color:#3d3d3d;text-align:justify}
+.reader-scroll{flex:1;overflow-y:auto;background:#fffafc;padding-bottom:78px}
+.book{max-width:700px;margin:0 auto;padding:26px 22px 30px;font-family:var(--read);font-size:18px;line-height:1.75;color:#3d3d3d;text-align:justify}
 .book h1,.book h2,.book h3{color:#6d1f38}
 .book.wide{max-width:860px}.book.full{max-width:none}
 .book p{margin:0 0 1em}
@@ -564,17 +596,14 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
    quick play/pause (❚❚ / ▶ by state, never reopening the panel)
    and the small ⌄ part reopens the settings panel at any time,
    while the voice keeps reading */
-.listen-pill{display:inline-flex;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:999px;overflow:hidden;min-height:48px;min-width:0}
-.listen-pill button{border:none;background:transparent;color:var(--ink);cursor:pointer;font:inherit;font-weight:500;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
-.listen-pill .lp-main{flex:1 1 auto;min-width:0;padding:9px 14px;font-size:15.5px;gap:6px;overflow:hidden;text-overflow:ellipsis}
-.listen-pill.started .lp-main{padding:9px 4px 9px 10px}
-.listen-pill .lp-sep{display:none;width:1px;background:var(--line);margin:9px 0;flex:0 0 auto}
+.listen-pill{display:inline-flex;align-items:stretch;background:var(--accent);border:1px solid var(--accent);border-radius:999px;overflow:hidden;min-height:48px;min-width:0}
+.listen-pill button{border:none;background:transparent;color:var(--accent-ink);cursor:pointer;font:inherit;font-weight:600;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center}
+.listen-pill .lp-main{flex:1 1 auto;min-width:0;padding:9px 16px;font-size:15.5px;gap:6px;overflow:hidden;text-overflow:ellipsis}
+.listen-pill.started .lp-main{padding:9px 4px 9px 12px}
+.listen-pill .lp-sep{display:none;width:1px;background:var(--accent-ink);opacity:.35;margin:9px 0;flex:0 0 auto}
 .listen-pill .lp-chev{display:none;flex:0 0 34px;padding:0;font-size:16px}
 .listen-pill.started .lp-sep{display:block}
 .listen-pill.started .lp-chev{display:inline-flex}
-.listen-pill.on{background:var(--accent);border-color:var(--accent)}
-.listen-pill.on button{color:var(--accent-ink)}
-.listen-pill.on .lp-sep{background:rgba(255,255,255,.4)}
 /* ---------- segnalibri nel testo ----------
    A small red ribbon slipped into the text exactly where the
    reader stopped, like a scrap of paper in a real book. It lives
@@ -583,18 +612,39 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
 #bmkBtn{position:relative;color:var(--accent)}
 .bmk-n{position:absolute;top:1px;right:1px;min-width:17px;height:17px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 4px}
 .bmk{display:inline-flex;align-items:center;justify-content:center;padding:.3em .14em;margin:-.3em 0;cursor:pointer;position:relative;vertical-align:baseline}
-.bmk i{display:block;width:.62em;height:.95em;background:#d63a2f;clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);border-radius:1px}
-.book.plain .bmk i{background:#d63a2f!important}
+.bmk i{display:block;width:.62em;height:.95em;background:var(--bmkc,#d63a2f);clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);border-radius:1px}
+.book.plain .bmk i{background:var(--bmkc,#d63a2f)!important}
 .bmk.flash{animation:bmkPulse 1.1s ease}
 @keyframes bmkPulse{0%,100%{transform:scale(1)}30%{transform:scale(1.8)}}
 .bmk-hint{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:6;background:var(--ink);color:var(--bg);border-radius:999px;padding:8px 8px 8px 16px;font-size:14px;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow);width:max-content;max-width:94%}
 .bmk-hint button{border:none;border-radius:999px;background:var(--accent);color:var(--accent-ink);font-weight:600;padding:7px 13px;cursor:pointer;font-size:13.5px;flex:0 0 auto}
+.bmk-pop{position:absolute;z-index:9;width:min(300px,86vw);background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:12px 14px}
+.bmk-pop-t{display:block;font-weight:700;font-size:15.5px;line-height:1.35;overflow-wrap:break-word;padding-right:24px}
+.bmk-pop-n{display:block;font-size:14px;line-height:1.45;color:var(--ink-2);margin-top:4px;overflow-wrap:break-word;white-space:pre-wrap}
+.bmk-pop-e{display:block;font-size:14.5px;text-align:center;color:var(--ink-2);padding:2px}
+.bmk-pop-x{position:absolute;top:4px;right:4px;width:30px;height:30px;border:none;border-radius:50%;background:none;color:var(--ink-2);font-size:15px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0}
+.bmk-pop-ed{margin-top:9px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:7px 14px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .bmk-item{display:flex;gap:10px;align-items:flex-start;padding:11px 2px;border-top:1px solid var(--line)}
-.bmk-item .bmk{flex:0 0 auto;pointer-events:none;margin-top:.1em}
+.bmk-item .bmk{flex:0 0 auto;pointer-events:none;margin-top:.1em;font-size:19px}
 .bmk-jump{flex:1;min-width:0;border:none;background:none;text-align:left;cursor:pointer;padding:0;color:var(--ink);font:inherit}
 .bmk-ch{display:block;font-size:12.5px;color:var(--ink-3);font-weight:600;margin-bottom:1px}
 .bmk-tx{display:block;font-size:14.5px;line-height:1.45;overflow-wrap:break-word}
-.bmk-del{color:var(--r-e);flex:0 0 auto}
+.bmk-tx.strong{font-weight:700}
+.bmk-ref{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.4;overflow-wrap:break-word;margin-top:1px}
+.bmk-note{display:block;font-size:13.5px;color:var(--ink-2);line-height:1.45;overflow-wrap:break-word;margin-top:3px;font-style:italic}
+.bmk-acts{display:flex;flex-direction:column;gap:4px;flex:0 0 auto;align-items:flex-end}
+.bmk-del{color:var(--r-e)}
+/* bookmark editor sheet: colour swatches (little ribbons), an
+   optional title and an optional free note */
+.bmk-colors{display:flex;gap:10px;flex-wrap:wrap}
+.bmk-color{width:44px;height:44px;border-radius:50%;border:2px solid var(--line);background:var(--panel);cursor:pointer;padding:0;display:inline-flex;align-items:flex-start;justify-content:center}
+.bmk-color i{display:block;width:15px;height:24px;margin-top:7px;background:var(--bmkc,#d63a2f);clip-path:polygon(0 0,100% 0,100% 100%,50% 76%,0 100%);border-radius:1px}
+.bmk-color.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel),0 0 0 4px var(--ink)}
+.bmk-field{width:100%;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--ink);font:inherit;font-size:15.5px;outline:none}
+.bmk-field:focus{border-color:var(--accent)}
+textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
+.bmk-edit-btns{display:flex;gap:10px}
+.bmk-edit-btns .btn{flex:1;justify-content:center;height:50px;border-radius:12px;font-size:16px}
 .listen-status{font-size:14px;color:var(--ink-2)}
 .listen-msg{background:var(--c-warn-bg);color:var(--c-warn);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.45;margin-top:12px}
 .listen-bigrow{display:flex;gap:10px}
@@ -609,6 +659,19 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
 .toast-item .t-x{border:none;background:none;color:inherit;cursor:pointer;font-size:13px}
 .toast-item .t-undo{border:none;background:none;color:var(--accent-2);cursor:pointer;font-weight:700}
 .offline-bar{position:fixed;top:0;left:0;right:0;z-index:300;background:var(--ink);color:var(--bg);text-align:center;font-size:13px;padding:6px 10px}
+/* ---------- aggiornamento disponibile / novità ----------
+   A slim bar pinned to the very top when the published page turns
+   out to be newer than the one running (see the version check in
+   the script): one line, an «Aggiorna» button that reloads, and a
+   ✕ to dismiss it. The «Novità» sheet (the confirm-pop shell)
+   lists what changed, once per version */
+.update-bar{position:fixed;top:0;left:0;right:0;z-index:320;background:var(--ink);color:var(--bg);display:flex;gap:10px;align-items:center;justify-content:center;padding:8px 10px calc(8px + 0px);font-size:14px;line-height:1.35;box-shadow:0 8px 20px rgba(0,0,0,.28)}
+.update-bar[hidden]{display:none!important}
+.update-bar span{overflow-wrap:break-word}
+.update-bar .btn{flex:0 0 auto;padding:8px 14px;font-size:14px}
+.ub-x{flex:0 0 auto;border:none;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:8px 6px}
+.news-list{margin:0 0 22px;padding-left:20px;text-align:left;color:var(--ink-2);font-size:15.5px;line-height:1.55}
+.news-list li{margin:6px 0}
 .foot{width:94%;max-width:560px;margin:0 auto;padding:8px 14px 34px;color:var(--ink-3);font-size:13px}
 .foot a{color:var(--ink-2)}
 
@@ -860,15 +923,12 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
     <div class="reader-title" id="readerTitle"></div>
     <div class="reader-bar">
       <button class="rbtn" id="readerBack" aria-label="Torna alla libreria">← Libreria</button>
-      <button class="rbtn plain" id="findToggle" type="button" aria-label="Cerca nella storia" title="Cerca nella storia"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+      <button class="rbtn" id="findToggle" type="button" aria-label="Cerca nella storia" title="Cerca nella storia"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M13 13l4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
       <button class="rbtn" id="aaBtn" title="Impostazioni di lettura" aria-haspopup="true">Aa</button>
       <button class="rbtn" id="bmkBtn" type="button" title="Segnalibri nel testo" aria-label="Segnalibri nel testo" aria-haspopup="true"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 3h11a.5.5 0 0 1 .5.5V21l-6-4.3L6 21V3.5A.5.5 0 0 1 6.5 3z" fill="currentColor"/></svg><span class="bmk-n" id="bmkCount" hidden></span></button>
       <span class="listen-pill" id="listenPill"><button class="lp-main" id="listenMain" type="button" title="Ascolta la storia ad alta voce">▶ Ascolta</button><span class="lp-sep" aria-hidden="true"></span><button class="lp-chev" id="listenChev" type="button" title="Impostazioni di Ascolta" aria-label="Impostazioni di Ascolta">⌄</button></span>
     </div>
-    <div class="chap-row"><div class="chap-wrap">
-      <select id="chapterSel" aria-label="Capitolo"></select>
-      <svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div></div>
+    <div class="chap-pager" id="chapPagerTop" hidden></div>
     <form class="reader-find" id="findForm" role="search">
       <input id="findQ" type="search" placeholder="Cerca nella storia…" autocomplete="off">
       <span class="find-count" id="findCount"></span>
@@ -876,7 +936,7 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
       <button type="submit" class="find-nav" id="findNext" title="Risultato successivo" aria-label="Risultato successivo">↓</button>
     </form>
   </div>
-  <div class="reader-scroll" id="readerScroll"><article class="book" id="book" tabindex="-1" aria-label="Storia"></article></div>
+  <div class="reader-scroll" id="readerScroll"><article class="book" id="book" tabindex="-1" aria-label="Storia"></article><div class="chap-pager chap-pager-bottom" id="chapPagerBottom" hidden></div></div>
   <div class="reader-pct" id="readerPct" aria-hidden="true">0%</div>
   <div class="reader-prog" aria-hidden="true"><i id="readerProgFill"></i></div>
   <div class="aa-scrim" id="aaScrim" hidden></div>
@@ -915,10 +975,26 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
     <span class="aa-grab" aria-hidden="true"></span>
     <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><b style="font-family:var(--serif);font-size:19px">I miei segnalibri</b></div>
     <div class="aa-sec"><button class="btn primary" id="bmkAdd" type="button" style="width:100%;justify-content:center;height:50px;border-radius:12px;font-size:16px">Metti un segnalibro</button>
-    <p class="listen-note">Poi tocca il punto del testo dove ti sei fermata: lì resta una tacchettina rossa, come un pezzetto di carta nel libro. Puoi metterne quanti vuoi. Per toglierne uno, tocca la tacchettina nel testo oppure «Togli» qui sotto.</p></div>
+    <p class="listen-note">Poi tocca il punto del testo dove vuoi inserire il segnalibro: si apre un foglietto dove scegli il colore del segno e, se vuoi, gli dai un titolo e una piccola nota — utile per segnare un punto da rileggere o da approfondire. Puoi metterne quanti vuoi. Toccando un segno nel testo vedi il suo titolo e la sua nota, senza toglierlo; per toglierlo usa «Togli» qui sotto, e con «Modifica» cambi colore, titolo e nota di uno già messo.</p></div>
     <div id="bmkList"></div>
   </div>
+  <div class="aa-scrim" id="bmkEditScrim" hidden></div>
+  <div class="aa-pop" id="bmkEditPop" role="dialog" aria-label="Segnalibro" hidden>
+    <span class="aa-grab" aria-hidden="true"></span>
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><b id="bmkEditHead" style="font-family:var(--serif);font-size:19px">Nuovo segnalibro</b></div>
+    <div class="aa-sec"><span class="aa-lbl" id="bmkColorLbl">Colore del segnalibro</span><div class="bmk-colors" id="bmkColors" role="radiogroup" aria-labelledby="bmkColorLbl"></div></div>
+    <div class="aa-sec"><span class="aa-lbl">Titolo (facoltativo)</span><input class="bmk-field" id="bmkTitleIn" type="text" maxlength="80" placeholder="Es. Il punto da rileggere" autocomplete="off"></div>
+    <div class="aa-sec"><span class="aa-lbl">Nota (facoltativa)</span><textarea class="bmk-field" id="bmkNoteIn" rows="3" placeholder="Una piccola nota su questo punto…" autocomplete="off"></textarea></div>
+    <div class="aa-sec bmk-edit-btns"><button class="btn" id="bmkEditCancel" type="button">Annulla</button><button class="btn primary" id="bmkEditSave" type="button">Salva</button></div>
+  </div>
   <div class="bmk-hint" id="bmkHint" hidden><span>Tocca il punto del testo dove vuoi il segnalibro</span><button id="bmkCancel" type="button">Annulla</button></div>
+  <div class="bmk-pop" id="bmkPopInfo" role="dialog" aria-label="Dettagli del segnalibro" hidden>
+    <button class="bmk-pop-x" id="bmkPopX" type="button" aria-label="Chiudi" hidden>✕</button>
+    <span class="bmk-pop-t" id="bmkPopTitle" hidden></span>
+    <span class="bmk-pop-n" id="bmkPopNote" hidden></span>
+    <span class="bmk-pop-e" id="bmkPopEmpty" hidden>Nessun titolo e nessuna nota</span>
+    <button class="bmk-pop-ed" id="bmkPopEdit" type="button" hidden>Modifica</button>
+  </div>
 </div>
 
 <div class="fic-missing" id="ficMissing" hidden>
@@ -953,11 +1029,20 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
 </div>
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="update-bar" id="updateBar" role="status" hidden><span>È disponibile una nuova versione di FFspace.</span><button class="btn primary" id="updateGo" type="button">Aggiorna</button><button class="ub-x" id="updateX" type="button" aria-label="Chiudi l’avviso di aggiornamento">✕</button></div>
+<div class="confirm-scrim" id="newsScrim" hidden></div>
+<div class="confirm-pop" id="newsPop" role="dialog" aria-modal="true" aria-labelledby="newsTitle" hidden>
+  <h2 id="newsTitle">Novità in FFspace</h2>
+  <ul class="news-list" id="newsList"></ul>
+  <div class="confirm-btns">
+    <button class="btn primary" id="newsOk" type="button">Ok, ho capito</button>
+  </div>
+</div>
 <div class="offline-bar" id="offline" role="status" hidden>Sei senza internet. Le storie scaricate si aprono lo stesso; le scansioni Drive riprendono quando torni in linea.</div>
 <noscript><div style="padding:20px">FFspace ha bisogno di JavaScript attivo per funzionare.</div></noscript>
 <footer class="foot">
   <p>FFspace è un lettore non ufficiale, fatto dai fan, per le storie che hai scaricato o che tieni in Google Drive. Non è affiliato ad AO3 né all’OTW. La tua libreria vive nel tuo browser: niente account e niente server.</p>
-  <p class="help-line">Aiuto in italiano — come si usa, passo passo <button type="button" class="info-btn" data-info="help" aria-label="Apri la guida passo passo">i</button></p>
+  <p class="help-line">Aiuto in italiano — come si usa, passo passo <button type="button" class="info-btn" data-info="help" aria-label="Apri la guida passo passo">i</button> · <button type="button" class="info-btn" data-info="novita" aria-label="Novità di questa versione">i</button> Novità di questa versione</p>
 </footer>
 <script>
 "use strict";
@@ -968,6 +1053,26 @@ const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmtNum=n=>n==null?"":Number(n).toLocaleString("it-IT");
 let uid=1; const nid=()=>"f"+(uid++)+"_"+Date.now().toString(36);
+
+/* ================= versione del sito e novità =================
+   A OGNI modifica pubblicata del sito vanno aggiornate insieme
+   queste due costanti: APP_VERSION (una stringa nuova, diversa
+   dalla precedente) e APP_CHANGELOG (voci brevi in italiano,
+   una riga ciascuna, che descrivono le modifiche di QUESTA
+   versione). Servono a due cose: il controllo in background che
+   confronta la versione in esecuzione con quella scaricata dalla
+   pagina pubblicata e mostra il banner «È disponibile una nuova
+   versione» (vedi checkForUpdate), e il foglio «Novità» mostrato
+   una sola volta alla prima apertura con una versione nuova (e
+   rileggibile dalla voce «Novità» in fondo alla home). */
+const APP_VERSION="2026-11-08-2";
+const APP_CHANGELOG=[
+  "Nuova sezione Segnalibri: metti più segnalibri colorati nel testo, con titolo e nota facoltativi; toccandone uno nel testo si vedono titolo e nota; dall'elenco si salta al punto, si modifica e si elimina.",
+  "Lettore riordinato: barra in alto più ordinata (Indietro, Cerca, Aa, Segnalibri e Ascolta in evidenza), capitoli divisi in pagine con la paginazione sopra e sotto.",
+  "Ascolta sistemato sulle pagine tradotte da Chrome: ora legge il testo tradotto con la voce giusta e la frase evidenziata segue quella letta.",
+  "Libreria: tag a gruppi di 15 con «Mostra altri», pagine numerate stile Google con «Vai a pagina», schede più larghe con meno sfondo ai lati.",
+  "Nuovo avviso di aggiornamento: quando esce una versione nuova il sito te lo dice da solo e ti mostra le novità."
+];
 
 const THEMES=["ruby","blossom","matcha","sunset","peony","lemon","lilac","violatte","peachy","melody","kurokiss","frosted","spring","lavender","midnight","bryn","crimson","rosepine","supernova"];
 const THEME_NAMES={ruby:"Ruby Mocha",blossom:"Blossom Bliss",matcha:"Matcha Honey",sunset:"Sunkissed Sorbet",peony:"Peony Latte",lemon:"Lemon Breeze",lilac:"Lilac Daydream",violatte:"Violet Latte",peachy:"Peachy Reverie",melody:"Melodyyyy",kurokiss:"Kuro Kiss",frosted:"Frosted Serenity",spring:"Spring Blossoms",lavender:"Lavender Haze",midnight:"Midnight Steel",bryn:"Bryn's Hearth",crimson:"Crimson Romance",rosepine:"Rosé Pine Moon",supernova:"Midnight Supernova"};
@@ -1674,7 +1779,7 @@ function sanitizeHTML(html){
 }
 function baseFic(name,kind){
   return {id:nid(),title:name.replace(/\.[^.]+$/,"").replace(/[_]+/g," ").trim()||"Senza titolo",author:"",fandoms:[],relationships:[],characters:[],tags:[],warnings:[],category:[],rating:"",language:"",summary:"",series:"",
-    words:null,chaptersLabel:"",complete:null,published:"",updated:"",progress:0,chapterIdx:0,dateRead:"",favorite:false,notes:"",myRating:0,shelfStatus:"",lists:[],
+    words:null,chaptersLabel:"",complete:null,published:"",updated:"",progress:0,chapterIdx:0,chapterFrac:0,dateRead:"",favorite:false,notes:"",myRating:0,shelfStatus:"",lists:[],
     formats:[{kind}],kind,status:"ok",downloaded:true,addedAt:Date.now(),lastOpened:0,size:0,sourceKind:"upload",sourceName:"",chapters:[],fileBlob:null,fileName:name};
 }
 function parseAO3Meta(doc,fic){
@@ -2460,6 +2565,7 @@ function applyProgress(d){
   let changed=false;
   if(Math.abs(p-(g.progress||0))>0.002){g.progress=p;changed=true}
   if(typeof d.chapter==="number"&&d.chapter!==g.chapterIdx){g.chapterIdx=d.chapter;changed=true}
+  if(typeof d.chapterFrac==="number"&&d.chapterFrac!==g.chapterFrac){g.chapterFrac=d.chapterFrac;changed=true}
   if(changed)render();
 }
 /* listening point / language / voice coming back from reader tabs:
@@ -2499,21 +2605,142 @@ function openReaderHere(id){
 }
 
 /* in-page reader (also the fallback when a new tab is blocked) */
-const R={id:null,font:18};
+/* ================= lettore a pagine: un capitolo per pagina =================
+   The story is no longer one endless page with a chapter dropdown:
+   #book renders ONLY the current chapter, and a Google-style pager
+   (‹, numbers with …, ›, current highlighted, «Vai al capitolo»)
+   sits in the chrome band on top and again under the chapter text
+   at the bottom of the scroll. The reading point is saved PER
+   CHAPTER: g.chapterIdx (which chapter) + g.chapterFrac (how far
+   down inside that chapter), both through persist() — IndexedDB
+   and the backup file, which copy every fic field. The total
+   progress g.progress (percent + hairline bar, library card state)
+   is derived from them, weighted by each chapter's text length:
+   (length of the chapters before + frac × this chapter's length)
+   ÷ the whole story's length. Stories saved before this change
+   carry only the total progress: the chapter and the point inside
+   it are derived back from that total on first open. Single-chapter
+   stories stay one page and show no pager. The very same reader
+   serves «Leggi» in this tab and the standalone ?fic=<id> tabs. */
+const R={id:null,font:18,chap:0,chs:[],weights:null};
+function chapterWeights(g){
+  if(R.weights&&R._wId===g.id&&R._wN===(g.chapters||[]).length)return R.weights;
+  const ws=(g.chapters||[]).map(c=>Math.max(1,stripTags((c&&c.html)||"").length));
+  R.weights=ws; R._wId=g.id; R._wN=ws.length;
+  return ws;
+}
+function totalProgressFor(g,chap,frac){
+  const ws=chapterWeights(g); if(!ws.length)return 0;
+  let before=0,total=0;
+  ws.forEach((w,i)=>{total+=w; if(i<chap)before+=w});
+  if(!total)return 0;
+  return Math.min(1,Math.max(0,(before+(frac||0)*(ws[chap]||0))/total));
+}
+function derivePointFromProgress(g){
+  const ws=chapterWeights(g); if(!ws.length)return{chap:0,frac:0};
+  let total=0; ws.forEach(w=>total+=w);
+  let target=(g.progress||0)*total, chap=0;
+  while(chap<ws.length-1&&target>ws[chap]){target-=ws[chap]; chap++}
+  return{chap:chap,frac:ws[chap]?Math.min(1,target/ws[chap]):0};
+}
+function chapPagerHTML(top){
+  const total=R.chs.length, cur=R.chap;
+  if(total<=1)return"";
+  const chTitle=R.chs[cur]?(R.chs[cur].title||("Capitolo "+(cur+1))):"";
+  const nums=pageNumbers(total,cur+1).map(n=>n==="…"
+    ?'<span class="pager-dots" aria-hidden="true">…</span>'
+    :'<button type="button" class="pager-btn'+(n===cur+1?" on":"")+'" data-chappage="'+n+'" '+(n===cur+1?'aria-current="page"':"")+' aria-label="Capitolo '+n+(R.chs[n-1]&&R.chs[n-1].title?": "+esc(R.chs[n-1].title):"")+'" title="'+esc(R.chs[n-1]?(R.chs[n-1].title||""):"")+'">'+n+"</button>").join("");
+  return '<div class="chap-pager-row"><nav class="pager" aria-label="Capitoli della storia">'+
+    '<button type="button" class="pager-btn" data-chappage="'+cur+'" '+(cur<=0?"disabled":"")+' aria-label="Capitolo precedente">‹</button>'+
+    nums+
+    '<button type="button" class="pager-btn" data-chappage="'+(cur+2)+'" '+(cur>=total-1?"disabled":"")+' aria-label="Capitolo successivo">›</button></nav>'+
+    '<span class="chap-cur-title">Capitolo '+(cur+1)+' di '+total+(chTitle?" · "+esc(chTitle):"")+"</span>"+
+    (top?'<form class="pager-jump chap-jump-form"><label>Vai al capitolo</label><input type="number" inputmode="numeric" min="1" max="'+total+'" step="1" value="'+(cur+1)+'" aria-label="Numero del capitolo"><button type="submit" class="btn">Vai</button></form>':"")+"</div>";
+}
+function renderChapterPagers(){
+  const multi=R.chs.length>1;
+  const top=$("#chapPagerTop"), bot=$("#chapPagerBottom");
+  if(top){top.hidden=!multi; top.innerHTML=multi?chapPagerHTML(true):""}
+  if(bot){bot.hidden=!multi; bot.innerHTML=multi?chapPagerHTML(false):"";
+    /* the bottom bar follows the book's width setting (Aa) */
+    const book=$("#book");
+    bot.classList.toggle("wide",!!(book&&book.classList.contains("wide")));
+    bot.classList.toggle("full",!!(book&&book.classList.contains("full")));}
+  [top,bot].forEach(box=>{
+    if(!box)return;
+    box.querySelectorAll("[data-chappage]").forEach(b=>{if(!b.disabled)b.onclick=()=>gotoChapter(+b.dataset.chappage-1)});
+    const f=box.querySelector(".chap-jump-form");
+    if(f)f.addEventListener("submit",e=>{e.preventDefault();const inp=f.querySelector("input");gotoChapter((inp?+inp.value:1)-1)});
+  });
+  syncReaderPad();
+}
+/* render ONLY the current chapter into #book, slip its bookmarks
+   back in and rebuild the pagers. Find marks from a previous page
+   are gone with that page's DOM, so the find state resets here —
+   goHit re-highlights after changing page (see the find code) */
+function renderChapterPage(){
+  const g=ficById(R.id); if(!g)return;
+  const ch=R.chs[R.chap]; if(!ch)return;
+  if(typeof hideBmkPop==="function")hideBmkPop();
+  if(typeof findResetMarks==="function")findResetMarks();
+  if(typeof ttsClearHl==="function")ttsClearHl();
+  $("#book").innerHTML='<section data-i="'+R.chap+'">'+(R.chs.length>1?'<h2 class="chap-h">'+esc(ch.title||("Capitolo "+(R.chap+1)))+"</h2>":"")+ch.html+"</section>";
+  renderBookmarks(); updBmkCount();
+  renderChapterPagers();
+  /* if a story search is live, this page's hits light up as it opens */
+  if(typeof findHits!=="undefined"&&findHits.length&&typeof highlightFindInChapter==="function")highlightFindInChapter(false);
+}
+function gotoChapter(idx,opts){
+  opts=opts||{};
+  const g=ficById(R.id); if(!g||!R.chs.length)return;
+  idx=Math.max(0,Math.min(R.chs.length-1,Math.floor(+idx||0)));
+  /* leaving this page by hand while Ascolta reads it: the spoken
+     segments point at this page's DOM, so the reading stops here
+     (the auto-advance at a chapter's end does NOT come through
+     here — it switches page itself, see ttsAdvanceChapter) */
+  if(!opts.keepTTS&&typeof TTS!=="undefined"&&TTS.playing&&idx!==R.chap)ttsStop();
+  if(idx===R.chap&&!opts.force){const sc=$("#readerScroll"); if(sc&&!opts.keepScroll)sc.scrollTop=0; return}
+  R.chap=idx;
+  g.chapterIdx=idx; g.chapterFrac=opts.frac||0;
+  g.progress=totalProgressFor(g,idx,g.chapterFrac);
+  renderChapterPage();
+  const sc=$("#readerScroll");
+  if(sc){
+    if(opts.frac){const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=opts.frac*Math.max(0,max)}
+    else if(!opts.keepScroll)sc.scrollTop=0;
+  }
+  persist(); updReaderProgress();
+}
 function openReaderInPage(g){
   if(typeof ttsStop==="function")ttsStop();
   TTS.segs=[]; TTS.idx=0; TTS.ficId=null; TTS.started=false;
   resetReaderChrome();
-  R.id=g.id;
+  R.id=g.id; R.weights=null;
   if(typeof updListenUI==="function")updListenUI();
   $("#readerTitle").textContent=g.title;
   const chs=g.chapters&&g.chapters.length?g.chapters:[{title:"Capitolo 1",html:"<p>In questo file non è stato trovato testo leggibile.</p>"}];
-  $("#chapterSel").innerHTML=chs.map((c,i)=>'<option value="'+i+'">'+esc(c.title||("Capitolo "+(i+1)))+"</option>").join("");
-  $("#book").innerHTML=chs.map((c,i)=>'<section data-i="'+i+'">'+(chs.length>1?'<h2 class="chap-h">'+esc(c.title||("Capitolo "+(i+1)))+"</h2>":"")+c.html+"</section>").join('<div class="chap-divider" aria-hidden="true">✦ ✿ ✦</div>');
-  /* the in-text bookmarks are already in the story when it opens:
-     their red ribbons are slipped back between the words */
+  R.chs=chs;
+  /* where reading resumes: the most recent in-text bookmark wins
+     (its chapter becomes the page); otherwise the saved chapter +
+     point inside it; stories saved before per-chapter points
+     existed get both derived back from the total progress */
+  let startChap=0, startFrac=0, startBmkTs=0;
+  if(Array.isArray(g.bookmarks)&&g.bookmarks.length){
+    let latest=g.bookmarks[0];
+    g.bookmarks.forEach(b=>{if((b.ts||0)>(latest.ts||0))latest=b});
+    if(typeof latest.c==="number"&&latest.c>=0&&latest.c<chs.length){startChap=latest.c; startBmkTs=latest.ts||0}
+  }
+  if(!startBmkTs){
+    if(typeof g.chapterFrac==="number"&&typeof g.chapterIdx==="number"&&(g.chapterIdx>0||g.chapterFrac>0)){
+      startChap=Math.max(0,Math.min(chs.length-1,g.chapterIdx)); startFrac=Math.min(1,Math.max(0,g.chapterFrac));
+    }else{
+      const d=derivePointFromProgress(g); startChap=d.chap; startFrac=d.frac;
+    }
+  }
+  R.chap=startChap;
+  g.chapterIdx=startChap; g.chapterFrac=startFrac;
   if(typeof setBmkMode==="function")setBmkMode(false);
-  renderBookmarks(); updBmkCount();
+  renderChapterPage();
   /* the story area declares the STORY's language (not the Italian
      interface), so Chrome understands the text is e.g. English and
      offers «Traduci pagina» from its ⋮ menu */
@@ -2522,34 +2749,41 @@ function openReaderInPage(g){
   syncReaderPad();
   const sc=$("#readerScroll");
   requestAnimationFrame(()=>{syncReaderPad();
-    /* when the story has in-text bookmarks, reading resumes from
-       the most recently placed one — its ribbon is already in the
-       text, waiting; with no bookmarks, from the saved point */
-    const marks=$("#book").querySelectorAll(".bmk");
-    if(marks.length){
-      let latest=marks[0];
-      marks.forEach(m=>{if((+m.dataset.ts||0)>(+latest.dataset.ts||0))latest=m});
-      try{latest.scrollIntoView({block:"center"})}catch(e){}
-      latest.classList.add("flash"); setTimeout(()=>latest.classList.remove("flash"),1800);
+    if(startBmkTs){
+      const mk=$("#book").querySelector('.bmk[data-ts="'+startBmkTs+'"]');
+      if(mk){try{mk.scrollIntoView({block:"center"})}catch(e){}
+        mk.classList.add("flash"); setTimeout(()=>mk.classList.remove("flash"),1800);
+        /* the point inside this chapter is the ribbon's position */
+        const max=sc.scrollHeight-sc.clientHeight;
+        if(max>0){g.chapterFrac=Math.min(1,Math.max(0,sc.scrollTop/max)); g.progress=totalProgressFor(g,R.chap,g.chapterFrac)}
+      }else{const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=startFrac*Math.max(0,max)}
     }else{
-      const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=(g.progress||0)*max;
+      const max=sc.scrollHeight-sc.clientHeight; sc.scrollTop=startFrac*Math.max(0,max);
     }
-    updReaderProgress()});
+    updReaderProgress(true)});
 }
-function updReaderProgress(){
-  const sc=$("#readerScroll"); const max=sc.scrollHeight-sc.clientHeight;
-  const p=max>0?Math.min(1,sc.scrollTop/max):1;
+function updReaderProgress(skipMsg){
+  const sc=$("#readerScroll"); if(!sc)return;
+  const max=sc.scrollHeight-sc.clientHeight;
+  const frac=max>0?Math.min(1,Math.max(0,sc.scrollTop/max)):1;
   const g=ficById(R.id);
+  const p=g?totalProgressFor(g,R.chap,frac):frac;
   /* the reference reader's bottom edge: small percent readout at
-     the right, hairline bar growing from the left */
+     the right, hairline bar growing from the left — the percent is
+     the WHOLE story's progress, not this chapter's */
   const pct=$("#readerPct"); if(pct)pct.textContent=Math.round(p*100)+"%";
   const fill=$("#readerProgFill"); if(fill)fill.style.width=(p*100)+"%";
-  if(g&&Math.abs(p-(g.progress||0))>0.004){
-    g.progress=p; persist();
+  if(!g)return;
+  const changed=Math.abs(p-(g.progress||0))>0.004||g.chapterIdx!==R.chap||Math.abs(frac-(g.chapterFrac||0))>0.004;
+  g.chapterIdx=R.chap; g.chapterFrac=frac;
+  if(Math.abs(p-(g.progress||0))>0.0005)g.progress=p;
+  if(changed){
+    persist();
     /* a standalone ?fic= tab also tells the library tab (its opener)
-       where the reading point is now, like the old blob tabs did */
-    if(document.documentElement.classList.contains("fic-standalone")){
-      const msg={type:"ficshelf-progress",id:g.id,pct:p};
+       where the reading point is now, like the old blob tabs did —
+       now with the chapter and the point inside it too */
+    if(!skipMsg&&document.documentElement.classList.contains("fic-standalone")){
+      const msg={type:"ficshelf-progress",id:g.id,pct:p,chapter:R.chap,chapterFrac:frac};
       try{if(window.opener&&!window.opener.closed)window.opener.postMessage(msg,"*")}catch(e){}
       try{const bc=new BroadcastChannel("ficshelf-progress");bc.postMessage(msg);bc.close()}catch(e){}
     }
@@ -2569,6 +2803,7 @@ function closeReaderInPage(){
   if(typeof setAaSheet==="function")setAaSheet(false);
   if(typeof setListenSheet==="function")setListenSheet(false);
   if(typeof setBmkSheet==="function")setBmkSheet(false);
+  if(typeof setBmkEditSheet==="function")setBmkEditSheet(false);
   if(typeof setBmkMode==="function")setBmkMode(false);
   if(typeof ttsStop==="function")ttsStop();
   R.id=null; persist(); render();
@@ -2736,7 +2971,8 @@ const INFO={
   step3:{t:"Decidi tu, resta a te",b:"<p>Tutto resta salvato in modo permanente nel tuo browser: anche chiudendo tutte le schede, lo ritrovi alla prossima apertura. Per sicurezza, ogni tanto salva una copia con il pulsante <b>Salva copia</b> in fondo alla pagina e conservala su Drive o su WhatsApp: con <b>Ripristina copia</b> ritrovi tutto anche su un telefono nuovo.</p>"},
   backup:{t:"Copia di sicurezza",b:"<p>Con <b>Salva copia</b> scarichi un unico file con tutto: le storie e i loro file originali, il punto di lettura di ognuna, i segnalibri messi nel testo, preferite, stato, voti, note, scaffali, il tema scelto e la selezione in corso. Con <b>Ripristina copia</b> scegli quel file e ritrovi tutto com’era.</p><p>Onestamente: i dati restano normalmente salvati anche chiudendo Chrome e spegnendo il telefono, ma <b>non è garantito al 100%</b>. Se cancelli i dati di navigazione, oppure il telefono finisce lo spazio, Chrome o Android possono cancellare anche i dati di questo sito. Per stare tranquilla, salva una copia ogni tanto e conservala fuori dal browser: su Google Drive, oppure inviala a te stessa su WhatsApp.</p>"},
   drawer:{t:"Dettagli della storia",b:"<p>Da qui: <b>Leggi</b> apre la storia qui, in questa stessa scheda, al posto della libreria (con «← Libreria» torni indietro); <b>Apri in un’altra scheda</b> la apre invece in una nuova scheda di Chrome, e la libreria resta dov’è. In entrambi i casi riprendi dal punto di lettura salvato. <b>Scarica il file</b> salva il file originale sul telefono, e sotto puoi cambiare stato e scaffali, dare un voto, scrivere la data di lettura e le tue note.</p><p>Se scrivi una nota, la storia compare anche nello scaffale <b>Segnalibri</b>. Con <b>Modifica dettagli</b> correggi titolo e autrice; <b>Rimuovi dalla libreria</b> cancella la storia da qui.</p>"},
-  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Il menu a tendina sotto il titolo salta a un capitolo; la lente cerca una parola nel testo.</p><p>In basso a destra la percentuale dice quanto hai letto, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi: quando riapri la storia, riprendi da dove eri.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana. Finché l’ascolto non è partito, il pulsante mostra solo «Ascolta» e apre il pannello delle impostazioni; quando dal pannello premi «Ascolta», il pannello si chiude, la scritta sparisce e il pulsante si divide in due: la parte grande mostra ❚❚ mentre la voce legge e ▶ quando è in pausa, e mette in pausa o riprende senza aprire il pannello; la freccetta ⌄ riapre le impostazioni mentre la voce continua a leggere, così cambi voce, lingua e velocità senza fermarla. Mentre la voce legge, la frase in corso resta sempre al centro della pagina, con quella prima e quella dopo visibili intorno.</p><p><b>Segnalibri nel testo</b>: il pulsante a forma di segnalibro nella barra apre «I miei segnalibri». Con «Metti un segnalibro» e poi toccando il punto esatto del testo, lì resta una tacchettina rossa, come un pezzetto di carta nel libro: puoi metterne quante vuoi, anche in mezzo a una frase. Toccando una tacchettina la togli; dall’elenco salti a quel punto o la togli da lì. I segnalibri si salvano con la storia (anche nella copia di sicurezza) e, riaprendola, la lettura riparte dalla tacchettina più recente.</p>"},
+  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Ogni capitolo è una pagina a sé: la barra con ‹, i numeri dei capitoli e › — sotto il titolo e di nuovo in fondo al capitolo — passa da un capitolo all’altro, e con «Vai al capitolo» salti al numero che scrivi; la lente cerca una parola in tutta la storia e, saltando a un risultato, apre la pagina di quel capitolo.</p><p>In basso a destra la percentuale dice quanto hai letto dell’intera storia, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi, capitolo e punto dentro al capitolo: quando riapri la storia, riprendi da dove eri, anche dopo un aggiornamento della pagina.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana. Finché l’ascolto non è partito, il pulsante mostra solo «Ascolta» e apre il pannello delle impostazioni; quando dal pannello premi «Ascolta», il pannello si chiude, la scritta sparisce e il pulsante si divide in due: la parte grande mostra ❚❚ mentre la voce legge e ▶ quando è in pausa, e mette in pausa o riprende senza aprire il pannello; la freccetta ⌄ riapre le impostazioni mentre la voce continua a leggere, così cambi voce, lingua e velocità senza fermarla. Mentre la voce legge, la frase in corso resta sempre al centro della pagina, con quella prima e quella dopo visibili intorno.</p><p><b>Segnalibri nel testo</b>: il pulsante a forma di segnalibro nella barra apre «I miei segnalibri». Con «Metti un segnalibro» e poi toccando il punto esatto del testo, si apre un foglietto: scegli il colore del segno (rosso, arancione, giallo, verde, blu o viola) e, se vuoi, gli dai un titolo e una piccola nota — così il segnalibro serve sia a ritrovare il punto sia a segnarti qualcosa da rileggere o approfondire. Puoi metterne quante vuoi, anche in mezzo a una frase. Dall’elenco, con «Modifica» cambi colore, titolo e nota di un segnalibro già messo; toccando un segno nel testo compare un piccolo riquadro con il suo titolo e la sua nota, senza toglierlo, e dall’elenco salti a quel punto o lo togli da lì. I segnalibri si salvano con la storia (anche nella copia di sicurezza) e, riaprendola, la lettura riparte dal segnalibro più recente.</p>"},
+  novita:{t:"Novità di questa versione",b:()=>"<p>Versione "+esc(APP_VERSION)+" — cosa è cambiato:</p><ul>"+"<li>"+APP_CHANGELOG.map(esc).join("</li><li>")+"</li></ul><p>Quando esce una versione nuova, il sito te lo dice da solo: compare un avviso in alto con il pulsante per aggiornare la pagina, e dopo l'aggiornamento questo stesso elenco compare una volta sola, da solo.</p>"},
   help:{t:"Come si usa, passo passo",b:"<ol><li>Tocca <b>Aggiungi</b> in alto (su telefono) oppure <b>Link Drive / Carica file</b>.</li><li>Per caricare una storia che hai sul telefono: tocca il riquadro tratteggiato e scegli il file (EPUB, PDF, HTML, TXT, MOBI, AZW3, oppure il file <b>.mht</b> salvato da Chrome).</li><li>Per un link Google Drive: incolla il link nella casella in alto e tocca <b>Aggiungi</b>.</li><li>La storia compare sullo scaffale. Toccala per vedere i dettagli, poi tocca <b>Leggi</b> per leggerla qui, in questa scheda, oppure <b>Apri in un’altra scheda</b> per aprirla in una nuova scheda di Chrome, così lo scaffale resta dov’è.</li><li>Quando torni sullo scaffale, la barra rosa sotto la storia ti dice a che punto eri arrivata: riaprendola, riprendi da lì.</li><li>Con <b>Seleziona</b> scegli più storie insieme: toccale per selezionarle (si evidenziano), poi con la barra in basso cambi stato o scaffale, le metti tra le preferite o le togli, oppure le rimuovi tutte in una volta. Ogni azione ti conferma cosa ha fatto, e la selezione resta salvata anche se ricarichi la pagina.</li></ol><p><b>Se qualcosa non funziona</b>, gli screenshot utili sono 4: (1) lo scaffale con le storie caricate, (2) la finestrella «Aggiungi un link Drive o carica le storie» aperta, (3) il messaggio di errore esatto, parola per parola, (4) la pagina di lettura aperta. Per fare uno screenshot: tasti <b>Accensione + Volume giù</b> insieme per un secondo. La registrazione schermo si avvia dal pannello che scende dall’alto (icona «Registrazione schermo»), poi rifai i passi che non funzionano e fermala: 20–30 secondi bastano.</p>"}
 };
 function showInfo(key){
@@ -3052,7 +3288,7 @@ $("#readerScroll").addEventListener("scroll",()=>{if(R.id)updReaderProgress()});
 let chromeHidden=false, chromeLastY=null;
 function chromeBusy(){
   return (typeof TTS!=="undefined"&&TTS.playing)||
-    !$("#aaPop").hidden||!$("#listenPop").hidden||!$("#bmkPop").hidden||
+    !$("#aaPop").hidden||!$("#listenPop").hidden||!$("#bmkPop").hidden||!$("#bmkEditPop").hidden||
     (typeof bmkMode!=="undefined"&&bmkMode)||
     $("#findForm").classList.contains("open");
 }
@@ -3088,7 +3324,8 @@ $("#readerScroll").addEventListener("scroll",()=>{
 },{passive:true});
 $("#readerPct").addEventListener("click",()=>{ if(chromeHidden){ setChromeHidden(false); chromeLastY=$("#readerScroll").scrollTop; } });
 addEventListener("resize",()=>syncReaderPad());
-$("#chapterSel").addEventListener("change",e=>{const s=$("#book").querySelector('[data-i="'+e.target.value+'"]');if(s){const sc=$("#readerScroll");sc.scrollTop+=s.getBoundingClientRect().top-sc.getBoundingClientRect().top-($(".reader-head").offsetHeight+8)}});
+/* chapter navigation is the pagers now (renderChapterPagers wires
+   their buttons and the «Vai al capitolo» form on every render) */
 /* page colour recolours ONLY the story area (its background and the
    story text, percent readout included); the chrome band and the Aa
    sheet keep the home-page theme colours */
@@ -3110,7 +3347,7 @@ $$("#aaPop [data-set]").forEach(b=>b.addEventListener("click",()=>{
   if(k==="font")book.style.fontFamily=v==="sans"?"'DM Sans',Arial,sans-serif":v==="easy"?"'Atkinson Hyperlegible',Arial,sans-serif":v==="classic"?"'Iowan Old Style',Palatino,Georgia,serif":"'Lora',Georgia,serif";
   if(k==="lh")book.style.lineHeight=v;
   if(k==="align")book.style.textAlign=v;
-  if(k==="rw"){book.classList.toggle("wide",v==="wide");book.classList.toggle("full",v==="full")}
+  if(k==="rw"){book.classList.toggle("wide",v==="wide");book.classList.toggle("full",v==="full");const bp=$("#chapPagerBottom");if(bp){bp.classList.toggle("wide",v==="wide");bp.classList.toggle("full",v==="full")}}
   if(k==="rt")setReaderPage(v);
 }));
 $("#hideFmt").addEventListener("change",e=>{$("#book").classList.toggle("plain",e.target.checked)});
@@ -3123,6 +3360,7 @@ $("#aaResetBtn").addEventListener("click",()=>{
   const book=$("#book");
   book.style.fontSize=""; book.style.fontFamily=""; book.style.lineHeight=""; book.style.textAlign="";
   book.classList.remove("wide","full","plain");
+  const bp2=$("#chapPagerBottom"); if(bp2)bp2.classList.remove("wide","full");
   $("#fsVal").textContent="18";
   $("#hideFmt").checked=false;
   setReaderPage("light");
@@ -3130,29 +3368,90 @@ $("#aaResetBtn").addEventListener("click",()=>{
   $$("#aaPop [data-set]").forEach(b=>b.classList.toggle("on",defs[b.dataset.set]===b.dataset.val));
 });
 $("#findToggle").addEventListener("click",()=>{$("#findForm").classList.toggle("open");syncReaderPad();if($("#findForm").classList.contains("open"))$("#findQ").focus()});
-let findHits=[],findIdx=-1;
-function clearFind(){findHits.forEach(m=>{const p=m.parentNode;if(p){p.replaceChild(document.createTextNode(m.textContent),m);p.normalize()}});findHits=[];findIdx=-1;$("#findCount").textContent=""}
-function goHit(i){if(!findHits.length)return;findIdx=(i+findHits.length)%findHits.length;findHits.forEach((m,j)=>m.classList.toggle("cur",j===findIdx));findHits[findIdx].scrollIntoView({block:"center"});$("#findCount").textContent=(findIdx+1)+" di "+findHits.length}
+/* story search across chapter pages: only one chapter is in the
+   DOM now, so the hits are indexed from the chapters' own data —
+   findHits is a list of {chap, n} (the n-th occurrence inside that
+   chapter, counted per text node exactly as the highlighter wraps
+   them) — and jumping to a hit opens that chapter's page first,
+   then highlights and centres it there */
+let findHits=[],findIdx=-1,findMarks=[],findQuery="";
+function findResetMarks(){
+  findMarks.forEach(m=>{const p=m.parentNode;if(p){p.replaceChild(document.createTextNode(m.textContent),m);p.normalize()}});
+  findMarks=[];
+}
+function clearFind(){
+  findResetMarks();
+  findHits=[]; findIdx=-1; findQuery="";
+  const c=$("#findCount"); if(c)c.textContent="";
+  const q=$("#findQ"); if(q)q.dataset.done="";
+}
+function countHitsInChapter(ch,ql){
+  const tmp=document.createElement("div");
+  /* the rendered page also carries the chapter heading, so it is
+     counted too — the n-th hit must mean the same on both sides */
+  tmp.innerHTML=(R.chs.length>1?'<h2>'+esc((ch&&ch.title)||"")+"</h2>":"")+((ch&&ch.html)||"");
+  const walker=document.createTreeWalker(tmp,NodeFilter.SHOW_TEXT); let n=0;
+  while(walker.nextNode()){
+    const low=walker.currentNode.textContent.toLowerCase(); let at=0,idx;
+    while((idx=low.indexOf(ql,at))>=0){n++; at=idx+ql.length}
+  }
+  return n;
+}
+function highlightFindInChapter(scroll){
+  findResetMarks();
+  if(!findQuery)return null;
+  const q=findQuery, ql=q.toLowerCase();
+  const walker=document.createTreeWalker($("#book"),NodeFilter.SHOW_TEXT); const nodes=[];
+  while(walker.nextNode())nodes.push(walker.currentNode);
+  for(const n of nodes){
+    const txt=n.textContent,low=txt.toLowerCase(); let last=0,idx,frag=null;
+    while((idx=low.indexOf(ql,last))>=0){
+      if(!frag)frag=document.createDocumentFragment();
+      frag.appendChild(document.createTextNode(txt.slice(last,idx)));
+      const mk=document.createElement("mark"); mk.className="findhit"; mk.textContent=txt.substr(idx,q.length); frag.appendChild(mk); findMarks.push(mk); last=idx+q.length;
+    }
+    if(frag){frag.appendChild(document.createTextNode(txt.slice(last)));n.parentNode.replaceChild(frag,n)}
+  }
+  /* the marks on this page belong to this chapter's hits, in order */
+  const firstOnPage=findHits.findIndex(h=>h.chap===R.chap);
+  let cur=null;
+  findMarks.forEach((m,j)=>{
+    const gi=firstOnPage+j;
+    const isCur=gi===findIdx;
+    m.classList.toggle("cur",isCur);
+    if(isCur)cur=m;
+  });
+  if(scroll&&cur)cur.scrollIntoView({block:"center"});
+  return cur;
+}
+function goHit(i){
+  if(!findHits.length)return;
+  findIdx=(i+findHits.length)%findHits.length;
+  const target=findHits[findIdx];
+  $("#findCount").textContent=(findIdx+1)+" di "+findHits.length;
+  if(target.chap!==R.chap){
+    gotoChapter(target.chap);
+    /* gotoChapter → renderChapterPage already highlighted this
+       page's hits and marked the current one: just centre it */
+    const cur=$("#book").querySelector("mark.findhit.cur");
+    if(cur)cur.scrollIntoView({block:"center"});
+  }else{
+    const cur=highlightFindInChapter(true);
+    if(!cur){const c=$("#book").querySelector("mark.findhit.cur"); if(c)c.scrollIntoView({block:"center"})}
+  }
+}
 $("#findForm").addEventListener("submit",e=>{
   e.preventDefault();
   if(findIdx>=0&&$("#findQ").dataset.done==="1"){goHit(findIdx+1);return}
   clearFind(); const q=$("#findQ").value.trim(); if(!q)return;
-  const walker=document.createTreeWalker($("#book"),NodeFilter.SHOW_TEXT); const nodes=[];
-  while(walker.nextNode())nodes.push(walker.currentNode);
-  for(const n of nodes){
-    const txt=n.textContent,low=txt.toLowerCase(),ql=q.toLowerCase(); let last=0,idx,frag=null;
-    while((idx=low.indexOf(ql,last))>=0){
-      if(!frag)frag=document.createDocumentFragment();
-      frag.appendChild(document.createTextNode(txt.slice(last,idx)));
-      const mk=document.createElement("mark"); mk.className="findhit"; mk.textContent=txt.substr(idx,q.length); frag.appendChild(mk); findHits.push(mk); last=idx+q.length;
-    }
-    if(frag){frag.appendChild(document.createTextNode(txt.slice(last)));n.parentNode.replaceChild(frag,n)}
-  }
+  findQuery=q;
+  const ql=q.toLowerCase();
+  R.chs.forEach((ch,ci)=>{const n=countHitsInChapter(ch,ql); for(let k=0;k<n;k++)findHits.push({chap:ci,n:k})});
   $("#findQ").dataset.done="1";
   $("#findCount").textContent=findHits.length?"1 di "+findHits.length:"Nessun risultato";
   if(findHits.length)goHit(0);
 });
-$("#findQ").addEventListener("input",e=>{e.target.dataset.done=""});
+$("#findQ").addEventListener("input",e=>{e.target.dataset.done="";if(!e.target.value.trim())clearFind()});
 $("#findPrev").addEventListener("click",()=>goHit(findIdx-1));
 /* ================= Ascolta: lettura ad alta voce =================
    «Ascolta» reads the whole story aloud with the phone's own voice
@@ -3477,10 +3776,28 @@ function ttsSavePos(seg){
   g.listenPos={c:seg.chap,s:seg.ci};
   persist();
 }
+/* Ascolta reaches the end of this chapter's page: the reading
+   turns the page by itself — the next chapter is rendered, its
+   sentences are built from the page as it is now, and the voice
+   carries on from its first sentence. Chapters with nothing to
+   say (a title page, an empty page) are skipped the same way */
+function ttsAdvanceChapter(){
+  const g=ficById(TTS.ficId); if(!g){ttsFinish(); return}
+  const next=R.chap+1;
+  if(next>=R.chs.length){ttsFinish(); return}
+  R.chap=next;
+  g.chapterIdx=next; g.chapterFrac=0; g.progress=totalProgressFor(g,next,0); persist();
+  renderChapterPage();
+  const sc=$("#readerScroll"); if(sc)sc.scrollTop=0;
+  TTS.segs=buildChapterSegs(g,next)||[];
+  TTS.liveChap=next; TTS.idx=0;
+  if(!TTS.segs.length){ttsAdvanceChapter(); return}
+  ttsSpeak(0);
+}
 function ttsSpeak(i){
   if(!TTS.playing)return;
   let seg=TTS.segs[i];
-  if(!seg){ttsFinish(); return}
+  if(!seg){ttsAdvanceChapter(); return}
   TTS.idx=i;
   /* entering a new chapter: rebuild its sentences from the page
      as it is NOW (see ttsRefreshChapter), then re-aim at the
@@ -3501,7 +3818,6 @@ function ttsSpeak(i){
      sentence, so the mark is what gets centred: the sentence
      before and the one after stay visible around it */
   try{const mk=seg.el.querySelector("mark.tts-hl"); (mk||seg.el).scrollIntoView({block:"center",behavior:"smooth"})}catch(e){}
-  const sel=$("#chapterSel"); if(sel&&+sel.value!==seg.chap)sel.value=seg.chap;
   updListenUI(seg);
   const u=new SpeechSynthesisUtterance(live.text);
   /* EVERY sentence is spoken by a voice of its own language,
@@ -3574,11 +3890,19 @@ function ttsPlay(){
     return;
   }
   ttsApplyChoice();
+  TTS.ficId=g.id;
+  /* the listening point lives in its own chapter: if that chapter
+     is not the page on screen, Ascolta opens its page first, so
+     the saved point (chapter + sentence) is where reading resumes */
+  if(g.listenPos&&typeof g.listenPos.c==="number"&&g.listenPos.c!==R.chap&&g.listenPos.c>=0&&g.listenPos.c<R.chs.length){
+    gotoChapter(g.listenPos.c,{keepTTS:true});
+  }
   /* the segments are rebuilt from the page AS IT IS NOW, every
      time: if Chrome has translated the story on screen since the
      reader opened, this is the translated text that gets read,
-     not the stored original */
-  TTS.segs=buildSegs(g); TTS.ficId=g.id; TTS.idx=ttsStartIdx(g);
+     not the stored original. With chapter pages, the segments are
+     this chapter's; at its end ttsAdvanceChapter turns the page */
+  TTS.segs=buildSegs(g); TTS.idx=ttsStartIdx(g);
   TTS.liveChap=TTS.segs[TTS.idx]?TTS.segs[TTS.idx].chap:-1;
   /* and the voice follows the language of those very words: when
      they are recognised as a different language than the chosen
@@ -3594,6 +3918,15 @@ function ttsPlay(){
     if(ls&&[...ls.options].some(o=>o.value===dl))ls.value=dl;
     fillVoiceSel(dl,g);
     const vsel=$("#listenVoice"); if(vsel)vsel.value=TTS.voice?TTS.voice.voiceURI:"";
+  }
+  /* a page with nothing to say — the title page above all — is
+     skipped: Ascolta moves on to the first chapter that has text */
+  if(!TTS.segs.length){
+    for(let c=R.chap+1;c<R.chs.length;c++){
+      gotoChapter(c,{keepTTS:true});
+      TTS.segs=buildSegs(g); TTS.idx=0;
+      if(TTS.segs.length){TTS.liveChap=R.chap; break}
+    }
   }
   if(!TTS.segs.length){const b=$("#listenMsg"); b.hidden=false; b.textContent="In questa storia non c’è testo da leggere ad alta voce."; return}
   clearFind();
@@ -3685,8 +4018,17 @@ $("#listenStop").addEventListener("click",ttsStop);
 $("#listenRestart").addEventListener("click",()=>{
   const g=ficById(R.id); if(!g)return;
   g.listenPos=null; persist();
-  if(TTS.playing){TTS.idx=0; ttsRestartSeg()}
-  else ttsPlay();
+  /* «from the beginning» means the story's first page now, not
+     just this chapter's first sentence */
+  if(TTS.playing){
+    ttsStop(); TTS.started=true;
+    if(R.chap!==0)gotoChapter(0,{keepTTS:true});
+    ttsPlay();
+  }
+  else{
+    if(R.chap!==0)gotoChapter(0);
+    ttsPlay();
+  }
   updListenUI();
 });
 $("#listenLang").addEventListener("change",e=>{
@@ -3717,11 +4059,63 @@ if(ttsSupported()){try{speechSynthesis.onvoiceschanged=()=>{if(!$("#listenPop").
    Putting one is two taps: «Segnalibro» in the reader bar opens
    «I miei segnalibri», its big button arms the placement, then a
    tap on the very words drops the ribbon there (the caret under
-   the finger gives the exact point). Tapping a ribbon takes it
-   out (with an undo toast); the list jumps to a ribbon or removes
-   it. Reopening the story, reading resumes from the most recent
-   ribbon. */
+   the finger gives the exact point). Tapping a ribbon in the text
+   does NOT remove it: a small pop-up next to it shows its title
+   and note (or, when it has neither, a line that fades away on
+   its own after ~1.5 s); removing stays in the list only, which
+   also jumps to a ribbon (with an undo toast on removal).
+   Reopening the story, reading resumes from the most recent
+   ribbon. The tap that places a ribbon now opens a small editor
+   sheet first: the ribbon's colour (six, red by default), an
+   optional title and an optional note are chosen there — and the
+   list's «Modifica» reopens the same sheet for a ribbon already
+   placed, so a bookmark doubles as a little annotation. */
 var bmkMode=false;
+/* each ribbon can carry its own colour (chosen from this palette,
+   red by default, as before), an optional title and an optional
+   free note — all saved on the bookmark itself, so they travel
+   with the fic exactly like the point does */
+const BMK_COLORS=[["Rosso","#d63a2f"],["Arancione","#e07b24"],["Giallo","#d9a400"],["Verde","#2e9e5b"],["Blu","#2f6fd6"],["Viola","#7c4dc4"]];
+function bmkColorHex(bm){return (bm&&typeof bm.color==="string"&&bm.color)||"#d63a2f"}
+/* the bookmark editor sheet: opened right after the tap that drops
+   a new ribbon (bmkEdit.pos = the point just tapped) and from the
+   list's «Modifica» (bmkEdit.ts = the bookmark being changed) */
+var bmkEdit=null, bmkEditColor="#d63a2f";
+function setBmkEditSheet(open){$("#bmkEditPop").hidden=!open;$("#bmkEditScrim").hidden=!open; if(open)setChromeHidden(false)}
+function renderBmkColors(){
+  $("#bmkColors").innerHTML=BMK_COLORS.map(c=>'<button type="button" class="bmk-color'+(c[1]===bmkEditColor?" on":"")+'" data-bmkcolor="'+c[1]+'" role="radio" aria-checked="'+(c[1]===bmkEditColor)+'" aria-label="Segnalibro '+c[0]+'" title="'+c[0]+'" style="--bmkc:'+c[1]+'"><i aria-hidden="true"></i></button>').join("");
+  $$("#bmkColors .bmk-color").forEach(b=>b.addEventListener("click",()=>{bmkEditColor=b.dataset.bmkcolor; renderBmkColors()}));
+}
+function openBmkEditor(edit){
+  bmkEdit=edit||{};
+  const g0=ficById(R.id);
+  const bm=bmkEdit.ts!=null&&g0&&Array.isArray(g0.bookmarks)?g0.bookmarks.find(b=>b.ts===bmkEdit.ts):null;
+  if(bmkEdit.ts!=null&&!bm)return;
+  bmkEdit.fromList=!$("#bmkPop").hidden;
+  bmkEditColor=bm?bmkColorHex(bm):"#d63a2f";
+  $("#bmkEditHead").textContent=bm?"Modifica segnalibro":"Nuovo segnalibro";
+  $("#bmkTitleIn").value=bm?(bm.title||""):"";
+  $("#bmkNoteIn").value=bm?(bm.note||""):"";
+  renderBmkColors();
+  setAaSheet(false); if(typeof setListenSheet==="function")setListenSheet(false); setBmkSheet(false);
+  setBmkEditSheet(true);
+}
+function closeBmkEditor(reopenList){
+  const back=bmkEdit&&bmkEdit.fromList;
+  bmkEdit=null; setBmkEditSheet(false);
+  if(reopenList&&back)setBmkSheet(true);
+}
+function saveBmkEditor(){
+  if(!bmkEdit)return;
+  const fields={color:bmkEditColor,title:$("#bmkTitleIn").value.trim(),note:$("#bmkNoteIn").value.trim()};
+  if(bmkEdit.pos){const pos=bmkEdit.pos; closeBmkEditor(false); addBookmark(pos,fields); return}
+  const g=ficById(R.id); if(!g||!Array.isArray(g.bookmarks)){closeBmkEditor(false); return}
+  const bm=g.bookmarks.find(b=>b.ts===bmkEdit.ts); if(!bm){closeBmkEditor(false); return}
+  bm.color=fields.color; bm.title=fields.title; bm.note=fields.note;
+  persist(); bmkSync(); renderBookmarks(); updBmkCount();
+  closeBmkEditor(true);
+  toast("Segnalibro aggiornato.");
+}
 function readerBlocks(sec){
   return [...sec.querySelectorAll("p,h1,h2,h3,h4,h5,h6,li,blockquote,pre")].filter(el=>{
     if(el.classList.contains("chap-h"))return false;
@@ -3768,9 +4162,10 @@ function insertBmkMarker(sec,blocks,bm){
   }
   const mk=document.createElement("span");
   mk.className="bmk"; mk.dataset.ts=bm.ts;
+  mk.style.setProperty("--bmkc",bmkColorHex(bm));
   mk.setAttribute("role","button");
-  mk.setAttribute("aria-label","Segnalibro nel testo: tocca per toglierlo");
-  mk.title="Segnalibro — tocca per toglierlo";
+  mk.setAttribute("aria-label","Segnalibro nel testo: tocca per vedere titolo e nota");
+  mk.title="Segnalibro — tocca per vedere titolo e nota";
   mk.innerHTML='<i aria-hidden="true"></i>';
   const walker=document.createTreeWalker(block,NodeFilter.SHOW_TEXT);
   let pos=0, n, placed=false;
@@ -3800,6 +4195,15 @@ function renderBookmarks(){
   }
 }
 function jumpToBookmark(ts){
+  /* the ribbon may live on another chapter's page: open that page
+     first, then centre the ribbon there */
+  const g=ficById(R.id);
+  const bm=g&&Array.isArray(g.bookmarks)?g.bookmarks.find(b=>b.ts===ts):null;
+  if(bm&&typeof bm.c==="number"&&bm.c!==R.chap){
+    gotoChapter(bm.c);
+    requestAnimationFrame(()=>jumpToBookmark(ts));
+    return;
+  }
   const mk=$("#book").querySelector('.bmk[data-ts="'+ts+'"]');
   if(!mk)return;
   try{mk.scrollIntoView({block:"center",behavior:"smooth"})}catch(e){try{mk.scrollIntoView()}catch(e2){}}
@@ -3820,18 +4224,62 @@ function removeBookmark(ts){
     if(!$("#bmkPop").hidden)renderBmkList();
   });
 }
-function addBookmark(pos){
+/* tapping a ribbon in the text does NOT remove it anymore: a small
+   pop-up opens next to the ribbon showing its title (bold) and its
+   note, with a ✕ to close it (tapping anywhere else closes it too)
+   and a «Modifica» button that reopens the editor sheet for that
+   bookmark. When the bookmark has neither title nor note, the
+   pop-up only says «Nessun titolo e nessuna nota» and disappears
+   on its own after about a second and a half. Removing a bookmark
+   stays possible only from the «I miei segnalibri» list. */
+var bmkPopTs=null, bmkPopTimer=null;
+function bmkPopOutside(e){
+  if(e.target&&e.target.closest&&e.target.closest("#bmkPopInfo"))return;
+  if(e.target&&e.target.closest&&e.target.closest(".bmk"))return;
+  hideBmkPop();
+}
+function hideBmkPop(){
+  const p=$("#bmkPopInfo"); if(p)p.hidden=true;
+  if(bmkPopTimer){clearTimeout(bmkPopTimer); bmkPopTimer=null}
+  bmkPopTs=null;
+  document.removeEventListener("pointerdown",bmkPopOutside,true);
+}
+function showBmkPop(mk,bm){
+  const pop=$("#bmkPopInfo"); if(!pop)return;
+  hideBmkPop();
+  bmkPopTs=bm.ts;
+  const hasT=!!(bm.title&&String(bm.title).trim()), hasN=!!(bm.note&&String(bm.note).trim());
+  const tEl=$("#bmkPopTitle"), nEl=$("#bmkPopNote");
+  tEl.hidden=!hasT; tEl.textContent=hasT?bm.title:"";
+  nEl.hidden=!hasN; nEl.textContent=hasN?bm.note:"";
+  $("#bmkPopEmpty").hidden=hasT||hasN;
+  $("#bmkPopX").hidden=!(hasT||hasN);
+  $("#bmkPopEdit").hidden=!(hasT||hasN);
+  pop.hidden=false;
+  const host=$("#reader"), hr=host.getBoundingClientRect(), mr=mk.getBoundingClientRect();
+  const pw=pop.offsetWidth, ph=pop.offsetHeight;
+  let left=mr.left-hr.left+mr.width/2-pw/2;
+  left=Math.max(6,Math.min(left,hr.width-pw-6));
+  let top=mr.bottom-hr.top+8;
+  if(top+ph>hr.height-6)top=mr.top-hr.top-ph-8;
+  if(top<6)top=6;
+  pop.style.left=left+"px"; pop.style.top=top+"px";
+  document.addEventListener("pointerdown",bmkPopOutside,true);
+  if(!(hasT||hasN))bmkPopTimer=setTimeout(hideBmkPop,1500);
+}
+function addBookmark(pos,fields){
   const g=ficById(R.id); if(!g)return;
   const t=pos.block.textContent||"";
   let snip=t.slice(pos.off,pos.off+60).replace(/\s+/g," ").trim();
   if(!snip)snip=t.slice(Math.max(0,pos.off-40),pos.off).replace(/\s+/g," ").trim();
   const bm={c:pos.c,b:pos.b,off:pos.off,text:snip,ts:Date.now()};
+  if(fields){bm.color=fields.color||"#d63a2f"; if(fields.title)bm.title=fields.title; if(fields.note)bm.note=fields.note}
   if(!Array.isArray(g.bookmarks))g.bookmarks=[];
   g.bookmarks.push(bm);
   persist(); bmkSync(); renderBookmarks(); updBmkCount();
   const mk=$("#book").querySelector('.bmk[data-ts="'+bm.ts+'"]');
   if(mk){mk.classList.add("flash"); setTimeout(()=>mk.classList.remove("flash"),1800)}
-  toast("Segnalibro messo: la tacchettina rossa segna quel punto nel testo.");
+  toast("Segnalibro messo in quel punto del testo.");
 }
 function bmkPosFromPoint(x,y){
   const book=$("#book"); if(!book)return null;
@@ -3878,27 +4326,42 @@ function renderBmkList(){
   const chs=(g&&g.chapters)||[];
   box.innerHTML=list.map(bm=>{
     const chT=chs[bm.c]?(chs[bm.c].title||("Capitolo "+(bm.c+1))):("Capitolo "+(bm.c+1));
-    return '<div class="bmk-item"><span class="bmk" aria-hidden="true"><i></i></span><button type="button" class="bmk-jump" data-ts="'+bm.ts+'"><span class="bmk-ch">'+esc(chT)+'</span><span class="bmk-tx">«'+esc(bm.text||"")+'…»</span></button><button type="button" class="linkbtn bmk-del" data-ts="'+bm.ts+'">Togli</button></div>';
+    const main=bm.title?'<span class="bmk-tx strong">'+esc(bm.title)+'</span>':'<span class="bmk-tx">Segnalibro</span>';
+    const ref=bm.text?'<span class="bmk-ref">«'+esc(bm.text)+'…»</span>':"";
+    const note=bm.note?'<span class="bmk-note">'+esc(bm.note)+'</span>':"";
+    return '<div class="bmk-item"><span class="bmk" style="--bmkc:'+esc(bmkColorHex(bm))+'" aria-hidden="true"><i></i></span><button type="button" class="bmk-jump" data-ts="'+bm.ts+'"><span class="bmk-ch">'+esc(chT)+'</span>'+main+ref+note+'</button><span class="bmk-acts"><button type="button" class="linkbtn bmk-edit" data-ts="'+bm.ts+'">Modifica</button><button type="button" class="linkbtn bmk-del" data-ts="'+bm.ts+'">Togli</button></span></div>';
   }).join("");
   box.querySelectorAll(".bmk-jump").forEach(b=>b.addEventListener("click",()=>{setBmkSheet(false); jumpToBookmark(+b.dataset.ts)}));
+  box.querySelectorAll(".bmk-edit").forEach(b=>b.addEventListener("click",()=>openBmkEditor({ts:+b.dataset.ts})));
   box.querySelectorAll(".bmk-del").forEach(b=>b.addEventListener("click",()=>removeBookmark(+b.dataset.ts)));
 }
-$("#bmkBtn").addEventListener("click",()=>{setAaSheet(false); setListenSheet(false); setBmkSheet($("#bmkPop").hidden)});
+$("#bmkBtn").addEventListener("click",()=>{hideBmkPop(); setAaSheet(false); setListenSheet(false); setBmkEditSheet(false); setBmkSheet($("#bmkPop").hidden)});
 $("#bmkScrim").addEventListener("click",()=>setBmkSheet(false));
 $("#bmkAdd").addEventListener("click",()=>{setBmkSheet(false); setBmkMode(true)});
 $("#bmkCancel").addEventListener("click",()=>setBmkMode(false));
+$("#bmkEditSave").addEventListener("click",saveBmkEditor);
+$("#bmkEditCancel").addEventListener("click",()=>closeBmkEditor(true));
+$("#bmkEditScrim").addEventListener("click",()=>closeBmkEditor(true));
 $("#book").addEventListener("click",e=>{
   if(bmkMode){
     if(e.target.closest("a,button,input,select,textarea"))return;
     const pos=bmkPosFromPoint(e.clientX,e.clientY);
     setBmkMode(false);
-    if(pos)addBookmark(pos);
+    if(pos)openBmkEditor({pos:pos});
     else toast("Non sono riuscita a mettere il segnalibro lì: prova a toccare una parola del testo.");
     return;
   }
   const mk=e.target.closest?e.target.closest(".bmk"):null;
-  if(mk&&mk.dataset&&mk.dataset.ts)removeBookmark(+mk.dataset.ts);
+  if(mk&&mk.dataset&&mk.dataset.ts){
+    const ts=+mk.dataset.ts;
+    const g=ficById(R.id);
+    const bm=g&&Array.isArray(g.bookmarks)?g.bookmarks.find(b=>b.ts===ts):null;
+    if(bm)showBmkPop(mk,bm);
+  }
 });
+$("#bmkPopX").addEventListener("click",hideBmkPop);
+$("#bmkPopEdit").addEventListener("click",()=>{const ts=bmkPopTs; hideBmkPop(); if(ts!=null)openBmkEditor({ts:ts})});
+$("#readerScroll").addEventListener("scroll",()=>{if(bmkPopTs!=null)hideBmkPop()},{passive:true});
 
 /* offline bar */
 function updOffline(){$("#offline").hidden=navigator.onLine}
@@ -3933,10 +4396,56 @@ function initStandaloneFic(){
 }
 $("#ficMissingBtn").addEventListener("click",exitStandaloneToLibrary);
 
+/* ================= aggiornamenti: banner e foglio «Novità» =================
+   Two halves of the same mechanism, both silent on failure:
+   1) NEW VERSION AVAILABLE — in the background, without blocking
+      anything, the page downloads ITSELF with a cache-busting
+      query and no-store, reads the version declared in the fresh
+      copy and, if it differs from the one running, shows the slim
+      top banner with an «Aggiorna» button (a plain reload). If
+      the fetch fails (offline, odd address) nothing happens.
+   2) WHAT'S NEW — the version last SEEN is kept in the IndexedDB
+      meta store. When the running version differs from it, this
+      is the first opening with the new version: the «Novità»
+      sheet lists APP_CHANGELOG once, and dismissing it records
+      the version as seen, so it stays away until the next one.
+      The same list is always reachable from the «Novità» entry in
+      the footer (INFO.novita). */
+function showNewsSheet(){
+  $("#newsList").innerHTML=APP_CHANGELOG.map(x=>"<li>"+esc(x)+"</li>").join("");
+  $("#newsPop").hidden=false; $("#newsScrim").hidden=false;
+}
+function hideNewsSheet(){
+  $("#newsPop").hidden=true; $("#newsScrim").hidden=true;
+  idbPut("meta",{key:"version",seen:APP_VERSION});
+}
+$("#newsOk").addEventListener("click",hideNewsSheet);
+$("#newsScrim").addEventListener("click",hideNewsSheet);
+async function checkWhatsNew(){
+  let seen=null;
+  try{const ms=await idbAll("meta"); const v=ms.find(m=>m.key==="version"); if(v&&typeof v.seen==="string")seen=v.seen}catch(e){}
+  if(seen!==APP_VERSION)showNewsSheet();
+}
+let updBannerShown=false, lastUpdCheck=0;
+function checkForUpdate(){
+  const now=Date.now();
+  if(updBannerShown||now-lastUpdCheck<5*60*1000)return;
+  lastUpdCheck=now;
+  try{
+    fetch(location.pathname+"?_v="+now,{cache:"no-store"}).then(r=>r.ok?r.text():Promise.reject(new Error("http"))).then(txt=>{
+      const m=/const APP_VERSION="([\w.\-]+)"/.exec(txt);
+      if(m&&m[1]!==APP_VERSION){updBannerShown=true; $("#updateBar").hidden=false}
+    }).catch(()=>{});
+  }catch(e){}
+}
+$("#updateGo").addEventListener("click",()=>{try{location.reload()}catch(e){}});
+$("#updateX").addEventListener("click",()=>{$("#updateBar").hidden=true});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)checkForUpdate()});
+
 /* init: paint at once, then restore the library saved in this browser */
 applyTheme("ruby");
 render();
-restore().then(()=>{try{initStandaloneFic()}catch(e){}});
+restore().then(()=>{try{initStandaloneFic()}catch(e){} try{checkWhatsNew()}catch(e){} setTimeout(checkForUpdate,2500);});
 </script>
 </body>
 </html>
