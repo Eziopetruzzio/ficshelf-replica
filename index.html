@@ -672,6 +672,14 @@ textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
 .ub-x{flex:0 0 auto;border:none;background:none;color:inherit;cursor:pointer;font-size:15px;line-height:1;padding:8px 6px}
 .news-list{margin:0 0 22px;padding-left:20px;text-align:left;color:var(--ink-2);font-size:15.5px;line-height:1.55}
 .news-list li{margin:6px 0}
+/* la storia delle versioni nel foglio «Novità» e nella voce in
+   fondo alla home: un titoletto per versione, una riga a
+   separare una versione dalla successiva; il foglio scorre se
+   le versioni da mostrare sono tante */
+.news-ver{margin:0 0 6px;text-align:left;font-size:17px;color:var(--ink)}
+.news-sep{border:none;border-top:1px solid var(--line);margin:16px 0 14px}
+#newsList .news-list,#infoBody .news-list{margin-bottom:8px}
+#newsPop{max-height:calc(100dvh - 32px);overflow-y:auto}
 .foot{width:94%;max-width:560px;margin:0 auto;padding:8px 14px 34px;color:var(--ink-3);font-size:13px}
 .foot a{color:var(--ink-2)}
 
@@ -1033,7 +1041,7 @@ textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
 <div class="confirm-scrim" id="newsScrim" hidden></div>
 <div class="confirm-pop" id="newsPop" role="dialog" aria-modal="true" aria-labelledby="newsTitle" hidden>
   <h2 id="newsTitle">Novità in FFspace</h2>
-  <ul class="news-list" id="newsList"></ul>
+  <div id="newsList"></div>
   <div class="confirm-btns">
     <button class="btn primary" id="newsOk" type="button">Ok, ho capito</button>
   </div>
@@ -1042,7 +1050,7 @@ textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
 <noscript><div style="padding:20px">FFspace ha bisogno di JavaScript attivo per funzionare.</div></noscript>
 <footer class="foot">
   <p>FFspace è un lettore non ufficiale, fatto dai fan, per le storie che hai scaricato o che tieni in Google Drive. Non è affiliato ad AO3 né all’OTW. La tua libreria vive nel tuo browser: niente account e niente server.</p>
-  <p class="help-line">Aiuto in italiano — come si usa, passo passo <button type="button" class="info-btn" data-info="help" aria-label="Apri la guida passo passo">i</button> · <button type="button" class="info-btn" data-info="novita" aria-label="Novità di questa versione">i</button> Novità di questa versione</p>
+  <p class="help-line">Aiuto in italiano — come si usa, passo passo <button type="button" class="info-btn" data-info="help" aria-label="Apri la guida passo passo">i</button> · <button type="button" class="info-btn" data-info="novita" aria-label="Novità e storia delle versioni">i</button> Novità e storia delle versioni</p>
 </footer>
 <script>
 "use strict";
@@ -1055,24 +1063,54 @@ const fmtNum=n=>n==null?"":Number(n).toLocaleString("it-IT");
 let uid=1; const nid=()=>"f"+(uid++)+"_"+Date.now().toString(36);
 
 /* ================= versione del sito e novità =================
-   A OGNI modifica pubblicata del sito vanno aggiornate insieme
-   queste due costanti: APP_VERSION (una stringa nuova, diversa
-   dalla precedente) e APP_CHANGELOG (voci brevi in italiano,
-   una riga ciascuna, che descrivono le modifiche di QUESTA
-   versione). Servono a due cose: il controllo in background che
-   confronta la versione in esecuzione con quella scaricata dalla
-   pagina pubblicata e mostra il banner «È disponibile una nuova
-   versione» (vedi checkForUpdate), e il foglio «Novità» mostrato
-   una sola volta alla prima apertura con una versione nuova (e
-   rileggibile dalla voce «Novità» in fondo alla home). */
-const APP_VERSION="2026-11-08-2";
+   APP_VERSION è la versione in esecuzione; APP_CHANGELOG è la
+   STORIA delle versioni, in ordine cronologico (dalla più
+   vecchia alla più nuova): ogni voce è {versione, modifiche},
+   con le modifiche di quella versione (voci brevi in italiano,
+   una riga ciascuna). A OGNI modifica pubblicata: alzare
+   APP_VERSION e AGGIUNGERE una voce in fondo ad APP_CHANGELOG
+   con quel numero — le voci vecchie non si cancellano mai.
+   Servono a tre cose: il controllo in background che confronta
+   la versione in esecuzione con quella scaricata dalla pagina
+   pubblicata e mostra il banner «È disponibile una nuova
+   versione» (vedi checkForUpdate); il foglio «Novità» mostrato
+   una sola volta alla prima apertura dopo un aggiornamento,
+   con le novità di TUTTE le versioni più nuove dell'ultima
+   vista — chi ha saltato un aggiornamento vede anche quelle
+   delle versioni saltate, in ordine (vedi checkWhatsNew); e la
+   voce «Novità» in fondo alla home, che mostra l'intera storia. */
+const APP_VERSION="2026-11-08-3";
 const APP_CHANGELOG=[
+  {versione:"2026-11-08-2",modifiche:[
   "Nuova sezione Segnalibri: metti più segnalibri colorati nel testo, con titolo e nota facoltativi; toccandone uno nel testo si vedono titolo e nota; dall'elenco si salta al punto, si modifica e si elimina.",
   "Lettore riordinato: barra in alto più ordinata (Indietro, Cerca, Aa, Segnalibri e Ascolta in evidenza), capitoli divisi in pagine con la paginazione sopra e sotto.",
   "Ascolta sistemato sulle pagine tradotte da Chrome: ora legge il testo tradotto con la voce giusta e la frase evidenziata segue quella letta.",
   "Libreria: tag a gruppi di 15 con «Mostra altri», pagine numerate stile Google con «Vai a pagina», schede più larghe con meno sfondo ai lati.",
   "Nuovo avviso di aggiornamento: quando esce una versione nuova il sito te lo dice da solo e ti mostra le novità."
+  ]},
+  {versione:"2026-11-08-3",modifiche:[
+  "Novità cumulative: se salti una o più versioni, dopo l'aggiornamento il foglio «Novità» mostra in ordine le novità di tutte le versioni che ti eri persa, ognuna sotto il suo «Versione …»; dalla voce «Novità» in fondo alla home si rilegge la storia completa delle versioni.",
+  "Ascolta sulle pagine tradotte: ora «Ricomincia dall'inizio» non fa più sparire la traduzione di Chrome — la pagina resta nella lingua che vedi sullo schermo e la voce riparte nella stessa lingua, rilevata dal testo visibile (italiana se la pagina è tradotta, originale se non lo è)."
+  ]}
 ];
+/* le versioni più nuove di «seen» (l'ultima vista da chi legge),
+   in ordine cronologico; «seen» nullo o non presente nella
+   storia (una versione più vecchia della prima registrata)
+   vuol dire: tutte */
+function changelogNewerThan(seen){
+  if(!seen)return APP_CHANGELOG.slice();
+  const i=APP_CHANGELOG.findIndex(e=>e.versione===seen);
+  return i<0?APP_CHANGELOG.slice():APP_CHANGELOG.slice(i+1);
+}
+/* una versione della storia come HTML: titoletto «Versione X»
+   sopra il suo elenco di modifiche */
+function newsVersionHTML(e){
+  return '<h3 class="news-ver">Versione '+esc(e.versione)+'</h3><ul class="news-list">'+e.modifiche.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>";
+}
+/* più versioni in sequenza, separate da una riga */
+function newsHistoryHTML(list){
+  return list.map((e,i)=>(i?'<hr class="news-sep">':"")+newsVersionHTML(e)).join("");
+}
 
 const THEMES=["ruby","blossom","matcha","sunset","peony","lemon","lilac","violatte","peachy","melody","kurokiss","frosted","spring","lavender","midnight","bryn","crimson","rosepine","supernova"];
 const THEME_NAMES={ruby:"Ruby Mocha",blossom:"Blossom Bliss",matcha:"Matcha Honey",sunset:"Sunkissed Sorbet",peony:"Peony Latte",lemon:"Lemon Breeze",lilac:"Lilac Daydream",violatte:"Violet Latte",peachy:"Peachy Reverie",melody:"Melodyyyy",kurokiss:"Kuro Kiss",frosted:"Frosted Serenity",spring:"Spring Blossoms",lavender:"Lavender Haze",midnight:"Midnight Steel",bryn:"Bryn's Hearth",crimson:"Crimson Romance",rosepine:"Rosé Pine Moon",supernova:"Midnight Supernova"};
@@ -2430,7 +2468,13 @@ function buildReaderDoc(g,startPct){
      Lock), and saves the listening point / language / voice straight
      into IndexedDB (plus a message back to the shelf tab), so it
      resumes where it stopped. STORYLANG is the story's own language
-     from the file's metadata — never the interface language. */
+     from the file's metadata — never the interface language. Its
+     «Ricomincia dall'inizio» (lRestartAll) follows the same rule
+     as the in-page reader's restart: the sentences are rebuilt
+     from the page AS IT IS on screen and language + voice are
+     re-detected from those live words — the page itself is never
+     rewritten, so a Chrome translation survives the restart and
+     the voice restarts in the language actually on screen. */
   const ttsJs=
    "var STORYLANG="+JSON.stringify(g.language||"")+",LPOS="+JSON.stringify(g.listenPos||null)+",LLANG="+JSON.stringify(g.listenLang||"")+",LVOICE="+JSON.stringify(g.listenVoice||"")+";"+
    "var TT={playing:false,paused:false,gen:0,segs:[],idx:0,rate:1,lang:'',voice:null,marks:[],wl:null,timer:null,liveChap:-1};"+
@@ -2468,6 +2512,7 @@ function buildReaderDoc(g,startPct){
    "function lStop(){if(TT.playing&&TT.segs[TT.idx]){LPOS={c:TT.segs[TT.idx].chap,s:TT.segs[TT.idx].ci};lSave()}TT.playing=false;TT.paused=false;TT.gen++;try{speechSynthesis.cancel()}catch(e){}lClearHl();lWl(false);lTimer(false);lUpd()}"+
    "function lFinish(){TT.playing=false;TT.paused=false;LPOS=null;lSave();lClearHl();lWl(false);lTimer(false);lUpd();var st=document.getElementById('lStatus');if(st)st.textContent='Fine della storia'}"+
    "function lRestartSeg(){if(!TT.playing)return;try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.paused=false;lWl(true);lTimer(true);var i=TT.idx;setTimeout(function(){if(TT.playing)lSpeak(i)},90);lUpd()}"+
+   "function lRestartAll(){LPOS=null;lSave();lClearHl();TT.segs=lSegs();TT.idx=0;TT.liveChap=TT.segs.length?TT.segs[0].chap:-1;var tl=lDetect();if(tl&&lNormLang(tl).split('-')[0]!==lNormLang(TT.lang||lTag()).split('-')[0]){TT.lang=tl;TT.voice=lBestVoice(tl)}if(TT.playing){try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.paused=false;lWl(true);lTimer(true);setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(0)},90)}lUpd()}"+
    "function lDefLang(langs){var primary=lTag().split('-')[0];var cand=langs.filter(function(l){return l.toLowerCase().split('-')[0]===primary});if(!cand.length)return'';var pref={en:'en-US',it:'it-IT',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-BR',ja:'ja-JP'}[primary];if(pref&&cand.indexOf(pref)>=0)return pref;if(cand.indexOf(lTag())>=0)return lTag();return cand[0]}"+
    "function lFillVoice(lang){var vs=document.getElementById('lVoice');vs.innerHTML='';var o=document.createElement('option');o.value='';o.textContent='Automatica (la migliore per questa lingua)';vs.appendChild(o);lVoices().filter(function(v){return lNormLang(v.lang)===lNormLang(lang)}).forEach(function(v){var op=document.createElement('option');op.value=v.voiceURI;op.textContent=v.name;if(v.voiceURI===LVOICE)op.selected=true;vs.appendChild(op)})}"+
    "function lMsg(){var b=document.getElementById('lMsg');var msg='';if(!lSup())msg='Questo browser non sa leggere ad alta voce: usa Chrome per ascoltare la storia.';else{var voices=lVoices();if(!voices.length)msg='Su questo telefono non è stata trovata nessuna voce per la lettura ad alta voce.';else{var primary=lTag().split('-')[0];var has=voices.some(function(v){return lNormLang(v.lang).split('-')[0]===primary});if(!has)msg='Questo telefono non ha una voce nella lingua di questa storia ('+lName(lTag())+'). Qui sotto puoi scegliere un\\'altra lingua e un\\'altra voce tra quelle presenti sul telefono: la lettura userà quella scelta.'}}b.hidden=!msg;b.textContent=msg}"+
@@ -2475,7 +2520,7 @@ function buildReaderDoc(g,startPct){
    "document.getElementById('listenBtn').addEventListener('click',function(){var open=lPop.hidden;showPop(open?lPop:null);if(open)lFill()});"+
    "document.getElementById('lPlay').addEventListener('click',function(){if(TT.playing&&!TT.paused)lPause();else{var was=TT.playing;lPlay();if(!was)try{showPop(null)}catch(e){}}});"+
    "document.getElementById('lStop').addEventListener('click',lStop);"+
-   "document.getElementById('lRestart').addEventListener('click',function(){LPOS=null;lSave();TT.idx=0;if(TT.playing)lRestartSeg();lUpd()});"+
+   "document.getElementById('lRestart').addEventListener('click',lRestartAll);"+
    "document.getElementById('lLang').addEventListener('change',function(){LLANG=this.value||'';LVOICE='';lFillVoice(LLANG);lApply();lMsg();if(TT.playing)lRestartSeg()});"+
    "document.getElementById('lVoice').addEventListener('change',function(){lApply();if(TT.playing)lRestartSeg()});"+
    "document.querySelectorAll('#lSpeed [data-rate]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('#lSpeed [data-rate]').forEach(function(x){x.classList.toggle('on',x===b)});TT.rate=parseFloat(b.getAttribute('data-rate'))||1;if(TT.playing&&!TT.paused)lRestartSeg()})});"+
@@ -2972,7 +3017,7 @@ const INFO={
   backup:{t:"Copia di sicurezza",b:"<p>Con <b>Salva copia</b> scarichi un unico file con tutto: le storie e i loro file originali, il punto di lettura di ognuna, i segnalibri messi nel testo, preferite, stato, voti, note, scaffali, il tema scelto e la selezione in corso. Con <b>Ripristina copia</b> scegli quel file e ritrovi tutto com’era.</p><p>Onestamente: i dati restano normalmente salvati anche chiudendo Chrome e spegnendo il telefono, ma <b>non è garantito al 100%</b>. Se cancelli i dati di navigazione, oppure il telefono finisce lo spazio, Chrome o Android possono cancellare anche i dati di questo sito. Per stare tranquilla, salva una copia ogni tanto e conservala fuori dal browser: su Google Drive, oppure inviala a te stessa su WhatsApp.</p>"},
   drawer:{t:"Dettagli della storia",b:"<p>Da qui: <b>Leggi</b> apre la storia qui, in questa stessa scheda, al posto della libreria (con «← Libreria» torni indietro); <b>Apri in un’altra scheda</b> la apre invece in una nuova scheda di Chrome, e la libreria resta dov’è. In entrambi i casi riprendi dal punto di lettura salvato. <b>Scarica il file</b> salva il file originale sul telefono, e sotto puoi cambiare stato e scaffali, dare un voto, scrivere la data di lettura e le tue note.</p><p>Se scrivi una nota, la storia compare anche nello scaffale <b>Segnalibri</b>. Con <b>Modifica dettagli</b> correggi titolo e autrice; <b>Rimuovi dalla libreria</b> cancella la storia da qui.</p>"},
   reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Ogni capitolo è una pagina a sé: la barra con ‹, i numeri dei capitoli e › — sotto il titolo e di nuovo in fondo al capitolo — passa da un capitolo all’altro, e con «Vai al capitolo» salti al numero che scrivi; la lente cerca una parola in tutta la storia e, saltando a un risultato, apre la pagina di quel capitolo.</p><p>In basso a destra la percentuale dice quanto hai letto dell’intera storia, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi, capitolo e punto dentro al capitolo: quando riapri la storia, riprendi da dove eri, anche dopo un aggiornamento della pagina.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana. Finché l’ascolto non è partito, il pulsante mostra solo «Ascolta» e apre il pannello delle impostazioni; quando dal pannello premi «Ascolta», il pannello si chiude, la scritta sparisce e il pulsante si divide in due: la parte grande mostra ❚❚ mentre la voce legge e ▶ quando è in pausa, e mette in pausa o riprende senza aprire il pannello; la freccetta ⌄ riapre le impostazioni mentre la voce continua a leggere, così cambi voce, lingua e velocità senza fermarla. Mentre la voce legge, la frase in corso resta sempre al centro della pagina, con quella prima e quella dopo visibili intorno.</p><p><b>Segnalibri nel testo</b>: il pulsante a forma di segnalibro nella barra apre «I miei segnalibri». Con «Metti un segnalibro» e poi toccando il punto esatto del testo, si apre un foglietto: scegli il colore del segno (rosso, arancione, giallo, verde, blu o viola) e, se vuoi, gli dai un titolo e una piccola nota — così il segnalibro serve sia a ritrovare il punto sia a segnarti qualcosa da rileggere o approfondire. Puoi metterne quante vuoi, anche in mezzo a una frase. Dall’elenco, con «Modifica» cambi colore, titolo e nota di un segnalibro già messo; toccando un segno nel testo compare un piccolo riquadro con il suo titolo e la sua nota, senza toglierlo, e dall’elenco salti a quel punto o lo togli da lì. I segnalibri si salvano con la storia (anche nella copia di sicurezza) e, riaprendola, la lettura riparte dal segnalibro più recente.</p>"},
-  novita:{t:"Novità di questa versione",b:()=>"<p>Versione "+esc(APP_VERSION)+" — cosa è cambiato:</p><ul>"+"<li>"+APP_CHANGELOG.map(esc).join("</li><li>")+"</li></ul><p>Quando esce una versione nuova, il sito te lo dice da solo: compare un avviso in alto con il pulsante per aggiornare la pagina, e dopo l'aggiornamento questo stesso elenco compare una volta sola, da solo.</p>"},
+  novita:{t:"Novità e storia delle versioni",b:()=>"<p>Versione attuale: "+esc(APP_VERSION)+". Qui sotto trovi le novità di ogni versione, dalla più recente alla più vecchia:</p>"+newsHistoryHTML(APP_CHANGELOG.slice().reverse())+"<p>Quando esce una versione nuova, il sito te lo dice da solo: compare un avviso in alto con il pulsante per aggiornare la pagina, e dopo l'aggiornamento il foglio «Novità» compare una volta sola, da solo, con le novità di tutte le versioni uscite dall'ultima che avevi visto, in ordine.</p>"},
   help:{t:"Come si usa, passo passo",b:"<ol><li>Tocca <b>Aggiungi</b> in alto (su telefono) oppure <b>Link Drive / Carica file</b>.</li><li>Per caricare una storia che hai sul telefono: tocca il riquadro tratteggiato e scegli il file (EPUB, PDF, HTML, TXT, MOBI, AZW3, oppure il file <b>.mht</b> salvato da Chrome).</li><li>Per un link Google Drive: incolla il link nella casella in alto e tocca <b>Aggiungi</b>.</li><li>La storia compare sullo scaffale. Toccala per vedere i dettagli, poi tocca <b>Leggi</b> per leggerla qui, in questa scheda, oppure <b>Apri in un’altra scheda</b> per aprirla in una nuova scheda di Chrome, così lo scaffale resta dov’è.</li><li>Quando torni sullo scaffale, la barra rosa sotto la storia ti dice a che punto eri arrivata: riaprendola, riprendi da lì.</li><li>Con <b>Seleziona</b> scegli più storie insieme: toccale per selezionarle (si evidenziano), poi con la barra in basso cambi stato o scaffale, le metti tra le preferite o le togli, oppure le rimuovi tutte in una volta. Ogni azione ti conferma cosa ha fatto, e la selezione resta salvata anche se ricarichi la pagina.</li></ol><p><b>Se qualcosa non funziona</b>, gli screenshot utili sono 4: (1) lo scaffale con le storie caricate, (2) la finestrella «Aggiungi un link Drive o carica le storie» aperta, (3) il messaggio di errore esatto, parola per parola, (4) la pagina di lettura aperta. Per fare uno screenshot: tasti <b>Accensione + Volume giù</b> insieme per un secondo. La registrazione schermo si avvia dal pannello che scende dall’alto (icona «Registrazione schermo»), poi rifai i passi che non funzionano e fermala: 20–30 secondi bastano.</p>"}
 };
 function showInfo(key){
@@ -4017,18 +4062,40 @@ $("#listenPlay").addEventListener("click",()=>{if(!TTS.started){ttsPlay(); setLi
 $("#listenStop").addEventListener("click",ttsStop);
 $("#listenRestart").addEventListener("click",()=>{
   const g=ficById(R.id); if(!g)return;
+  /* «from the beginning» means the story's first page that has
+     something to say (a title page is skipped, as always) — but
+     the restart NEVER redraws a page that is already on screen.
+     Redrawing re-injects the chapter's stored HTML, and a Chrome
+     translation lives only in the visible page: the text would
+     snap back to the original language and the voice would
+     follow it (the reported bug — the old restart round-tripped
+     through chapter 0 and re-rendered the reading page from the
+     stored data). So when the restart page IS the page on
+     screen, the DOM is left exactly as it is: the listening
+     point is cleared and ttsPlay rebuilds the sentences from
+     the LIVE page — the translated words, when the page is
+     translated — re-detecting language and voice from those
+     very words. Only when the restart page is a different one
+     do we turn the page, straight to it in a single step: that
+     page is not on screen, so nothing visible is lost. The
+     same principle already governs stop-then-play (ttsPlay
+     turns the page only when the saved listening chapter is
+     not the one on screen) */
+  let target=0;
+  for(let c=0;c<R.chs.length;c++){
+    const ch=R.chs[c]; if(!ch)continue;
+    const txt=stripTags(ch.html);
+    if(!txt)continue;
+    if(c===0&&isTitleText(txt))continue;
+    target=c; break;
+  }
+  const wasPlaying=TTS.playing;
+  if(wasPlaying){ttsStop(); TTS.started=true}
+  /* ttsStop saves the point it stopped at: the restart clears
+     it again, so the reading truly starts over */
   g.listenPos=null; persist();
-  /* «from the beginning» means the story's first page now, not
-     just this chapter's first sentence */
-  if(TTS.playing){
-    ttsStop(); TTS.started=true;
-    if(R.chap!==0)gotoChapter(0,{keepTTS:true});
-    ttsPlay();
-  }
-  else{
-    if(R.chap!==0)gotoChapter(0);
-    ttsPlay();
-  }
+  if(target!==R.chap)gotoChapter(target);
+  ttsPlay();
   updListenUI();
 });
 $("#listenLang").addEventListener("change",e=>{
@@ -4407,12 +4474,18 @@ $("#ficMissingBtn").addEventListener("click",exitStandaloneToLibrary);
    2) WHAT'S NEW — the version last SEEN is kept in the IndexedDB
       meta store. When the running version differs from it, this
       is the first opening with the new version: the «Novità»
-      sheet lists APP_CHANGELOG once, and dismissing it records
-      the version as seen, so it stays away until the next one.
-      The same list is always reachable from the «Novità» entry in
+      sheet lists the news of EVERY version newer than the seen
+      one, in chronological order, each under its own «Versione
+      X» heading and separated by a rule — a reader who skipped
+      an update sees the skipped versions' news too, not just
+      the latest. Dismissing the sheet records the running
+      version as seen, so it stays away until the next one. The
+      full history is always reachable from the «Novità» entry in
       the footer (INFO.novita). */
+let lastSeenVersion=null;
 function showNewsSheet(){
-  $("#newsList").innerHTML=APP_CHANGELOG.map(x=>"<li>"+esc(x)+"</li>").join("");
+  const list=changelogNewerThan(lastSeenVersion);
+  $("#newsList").innerHTML=newsHistoryHTML(list.length?list:APP_CHANGELOG.slice(-1));
   $("#newsPop").hidden=false; $("#newsScrim").hidden=false;
 }
 function hideNewsSheet(){
@@ -4424,6 +4497,7 @@ $("#newsScrim").addEventListener("click",hideNewsSheet);
 async function checkWhatsNew(){
   let seen=null;
   try{const ms=await idbAll("meta"); const v=ms.find(m=>m.key==="version"); if(v&&typeof v.seen==="string")seen=v.seen}catch(e){}
+  lastSeenVersion=seen;
   if(seen!==APP_VERSION)showNewsSheet();
 }
 let updBannerShown=false, lastUpdCheck=0;
