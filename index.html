@@ -604,6 +604,23 @@ mark.tts-hl{background:var(--hl);color:inherit;border-radius:2px}
 .listen-pill .lp-chev{display:none;flex:0 0 34px;padding:0;font-size:16px}
 .listen-pill.started .lp-sep{display:block}
 .listen-pill.started .lp-chev{display:inline-flex}
+/* ---------- player della lettura (bolla in basso) ----------
+   While Ascolta is on (reading or paused), a compact player bar
+   floats at the bottom of the reader, above the percent readout
+   and the hairline progress bar: previous / next sentence, −10s,
+   pause/resume, stop, +10s — the same commands Android shows in
+   the media notification (see the Media Session code). It hides
+   by itself when the reading stops or ends, and it never covers
+   the spoken sentence, which Ascolta keeps centred on screen */
+.tts-bar{position:absolute;left:8px;right:8px;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:7;background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:7px 5px 5px}
+.tts-bar[hidden]{display:none!important}
+.tts-bar-row{display:flex;align-items:stretch;justify-content:space-between;gap:2px}
+.tts-btn{flex:1 1 0;min-width:0;border:none;background:transparent;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 2px 4px;border-radius:12px;font:inherit}
+.tts-btn:active{background:var(--accent-soft)}
+.tts-btn[disabled]{opacity:.35}
+.tts-btn .ic{font-size:19px;line-height:1.15}
+.tts-btn .lb{font-size:10.5px;font-weight:600;color:var(--ink-2);line-height:1.2;text-align:center;white-space:nowrap}
+.tts-btn.main .ic{font-size:21px}
 /* ---------- segnalibri nel testo ----------
    A small red ribbon slipped into the text exactly where the
    reader stopped, like a scrap of paper in a real book. It lives
@@ -947,6 +964,16 @@ textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
   <div class="reader-scroll" id="readerScroll"><article class="book" id="book" tabindex="-1" aria-label="Storia"></article><div class="chap-pager chap-pager-bottom" id="chapPagerBottom" hidden></div></div>
   <div class="reader-pct" id="readerPct" aria-hidden="true">0%</div>
   <div class="reader-prog" aria-hidden="true"><i id="readerProgFill"></i></div>
+  <div class="tts-bar" id="ttsBar" hidden role="group" aria-label="Comandi della lettura ad alta voce">
+    <div class="tts-bar-row">
+      <button class="tts-btn" id="ttsPrevSent" type="button" aria-label="Frase precedente"><span class="ic" aria-hidden="true">⏮&#65038;</span><span class="lb">Frase prec.</span></button>
+      <button class="tts-btn" id="ttsBack10" type="button" aria-label="Indietro di 10 secondi"><span class="ic" aria-hidden="true">↩</span><span class="lb">−10 sec</span></button>
+      <button class="tts-btn main" id="ttsPlayPause" type="button" aria-label="Metti in pausa"><span class="ic" aria-hidden="true">❚❚</span><span class="lb">Pausa</span></button>
+      <button class="tts-btn" id="ttsStopBtn" type="button" aria-label="Ferma la lettura"><span class="ic" aria-hidden="true">⏹&#65038;</span><span class="lb">Stop</span></button>
+      <button class="tts-btn" id="ttsFwd10" type="button" aria-label="Avanti di 10 secondi"><span class="ic" aria-hidden="true">↪</span><span class="lb">+10 sec</span></button>
+      <button class="tts-btn" id="ttsNextSent" type="button" aria-label="Frase successiva"><span class="ic" aria-hidden="true">⏭&#65038;</span><span class="lb">Frase succ.</span></button>
+    </div>
+  </div>
   <div class="aa-scrim" id="aaScrim" hidden></div>
   <div class="aa-pop" id="aaPop" role="dialog" aria-label="Impostazioni di lettura" hidden>
     <span class="aa-grab" aria-hidden="true"></span>
@@ -977,6 +1004,7 @@ textarea.bmk-field{resize:vertical;min-height:66px;line-height:1.45}
     <div class="aa-sec"><span class="aa-lbl">Voce</span><select class="lsel" id="listenVoice" aria-label="Voce della lettura ad alta voce"></select></div>
     <div class="aa-sec" style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="listenRestart" type="button">↺ Ricomincia dall’inizio</button><button class="btn ghost" id="listenStop" type="button">■ Ferma</button></div>
     <p class="listen-note">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi il lettore, alla riapertura si riparte da lì. Se hai tradotto la pagina con Chrome, Ascolta legge la traduzione che vedi sullo schermo, frase per frase, ognuna con la voce della sua lingua.</p>
+    <p class="listen-note">Quando la lettura è partita, in basso nel lettore compare il <b>player</b>: da lì puoi tornare indietro o andare avanti di una frase, oppure di circa 10 secondi (il salto è stimato contando le parole delle frasi, quindi è approssimativo). La lettura <b>continua anche se riduci Chrome a icona</b> o blocchi lo schermo: abbassando la tendina del telefono trovi la notifica con il titolo della storia e gli stessi comandi del player — frase precedente e successiva, indietro e avanti di 10 secondi, pausa e stop — come succede per la musica. Se invece chiudi Chrome dalle app recenti, la lettura si ferma; e in rari casi il risparmio batteria del telefono può interromperla.</p>
   </div>
   <div class="aa-scrim" id="bmkScrim" hidden></div>
   <div class="aa-pop" id="bmkPop" role="dialog" aria-label="I miei segnalibri" hidden>
@@ -1079,7 +1107,7 @@ let uid=1; const nid=()=>"f"+(uid++)+"_"+Date.now().toString(36);
    vista — chi ha saltato un aggiornamento vede anche quelle
    delle versioni saltate, in ordine (vedi checkWhatsNew); e la
    voce «Novità» in fondo alla home, che mostra l'intera storia. */
-const APP_VERSION="2026-11-08-3";
+const APP_VERSION="2026-11-12-1";
 const APP_CHANGELOG=[
   {versione:"2026-11-08-2",modifiche:[
   "Nuova sezione Segnalibri: metti più segnalibri colorati nel testo, con titolo e nota facoltativi; toccandone uno nel testo si vedono titolo e nota; dall'elenco si salta al punto, si modifica e si elimina.",
@@ -1091,6 +1119,10 @@ const APP_CHANGELOG=[
   {versione:"2026-11-08-3",modifiche:[
   "Novità cumulative: se salti una o più versioni, dopo l'aggiornamento il foglio «Novità» mostra in ordine le novità di tutte le versioni che ti eri persa, ognuna sotto il suo «Versione …»; dalla voce «Novità» in fondo alla home si rilegge la storia completa delle versioni.",
   "Ascolta sulle pagine tradotte: ora «Ricomincia dall'inizio» non fa più sparire la traduzione di Chrome — la pagina resta nella lingua che vedi sullo schermo e la voce riparte nella stessa lingua, rilevata dal testo visibile (italiana se la pagina è tradotta, originale se non lo è)."
+  ]},
+  {versione:"2026-11-12-1",modifiche:[
+  "Nuovo player della lettura: quando Ascolta parte, in basso nel lettore compare una barra con i comandi per tornare indietro e andare avanti di una frase o di 10 secondi, oltre a pausa e stop.",
+  "La lettura continua anche con Chrome ridotto a icona o a schermo bloccato, e si comanda anche dalla notifica del telefono — con gli stessi comandi del player — come si fa con la musica."
   ]}
 ];
 /* le versioni più nuove di «seen» (l'ultima vista da chi legge),
@@ -2406,6 +2438,12 @@ function buildReaderDoc(g,startPct){
    "mark.tts-hl{background:#ffe27a;color:inherit}"+
    ".book.plain mark.tts-hl{background:#ffe27a!important}"+
    "#listenBtn.on{background:"+T.acc+";color:"+T.accInk+";border-color:"+T.acc+"}"+
+   "#lBar{position:fixed;left:8px;right:8px;bottom:calc(28px + env(safe-area-inset-bottom,0px));z-index:9;background:"+T.panel+";color:"+T.ink+";border:1px solid "+T.line+";border-radius:16px;box-shadow:0 10px 24px rgba(30,5,20,.22);padding:6px 4px 4px;display:flex;gap:2px}"+
+   "#lBar[hidden]{display:none}"+
+   "#lBar button{flex:1 1 0;min-width:0;border:none;background:none;color:inherit;cursor:pointer;font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px 2px 4px;border-radius:12px}"+
+   "#lBar button:active{background:"+T.accSoft+"}"+
+   "#lBar button .ic{font-size:19px;line-height:1.15}"+
+   "#lBar button small{font-size:10.5px;font-weight:600;color:"+T.ink2+";line-height:1.2;white-space:nowrap}"+
    ".bigrow{display:flex;gap:10px}.bigrow .btn{flex:1;height:54px;border-radius:12px;font-size:16.5px;font-weight:600}"+
    ".btn.pri{background:"+T.acc+";color:"+T.accInk+";border-color:"+T.acc+"}"+
    "select.lsel{width:100%;padding:11px 12px;border:1px solid "+T.line+";border-radius:10px;background:"+T.panel+";color:"+T.ink+";font-size:15.5px}"+
@@ -2477,6 +2515,7 @@ function buildReaderDoc(g,startPct){
      the voice restarts in the language actually on screen. */
   const ttsJs=
    "var STORYLANG="+JSON.stringify(g.language||"")+",LPOS="+JSON.stringify(g.listenPos||null)+",LLANG="+JSON.stringify(g.listenLang||"")+",LVOICE="+JSON.stringify(g.listenVoice||"")+";"+
+   "var DOCTITLE="+JSON.stringify(g.title||"")+",DOCAUTHOR="+JSON.stringify(g.author||"")+";"+
    "var TT={playing:false,paused:false,gen:0,segs:[],idx:0,rate:1,lang:'',voice:null,marks:[],wl:null,timer:null,liveChap:-1};"+
    "function lSup(){return 'speechSynthesis' in window&&'SpeechSynthesisUtterance' in window}"+
    "function lVoices(){if(!lSup())return[];try{return speechSynthesis.getVoices()||[]}catch(e){return[]}}"+
@@ -2493,7 +2532,18 @@ function buildReaderDoc(g,startPct){
    "function lSave(){try{if(window.indexedDB){var go=function(db){try{var tx=db.transaction('fics','readwrite');var st=tx.objectStore('fics');var gr=st.get(FID);gr.onsuccess=function(){var g=gr.result;if(!g)return;g.listenPos=LPOS;g.listenLang=LLANG||null;g.listenVoice=LVOICE||null;try{st.put(g)}catch(e){}}}catch(e){}};if(_ldb)go(_ldb);else{var rq=indexedDB.open('ficshelf');rq.onsuccess=function(){_ldb=rq.result;go(_ldb)}}}}catch(e){}try{var msg={type:'ficshelf-listen',id:FID,listenPos:LPOS,listenLang:LLANG||null,listenVoice:LVOICE||null};if(window.opener&&!window.opener.closed)window.opener.postMessage(msg,'*');if(window.BroadcastChannel){var bc=new BroadcastChannel('ficshelf-progress');bc.postMessage(msg);bc.close()}}catch(e){}}"+
    "function lWl(on){try{if(on){if(navigator.wakeLock&&!TT.wl)navigator.wakeLock.request('screen').then(function(w){TT.wl=w;w.addEventListener('release',function(){TT.wl=null})}).catch(function(){})}else if(TT.wl){var w=TT.wl;TT.wl=null;w.release()}}catch(e){}}"+
    "function lTimer(on){if(TT.timer){clearInterval(TT.timer);TT.timer=null}if(on)TT.timer=setInterval(function(){if(TT.playing&&!TT.paused&&lSup()&&speechSynthesis.speaking){try{speechSynthesis.resume()}catch(e){}}},8000)}"+
-   "function lUpd(seg){var play=document.getElementById('lPlay'),btn=document.getElementById('listenBtn'),st=document.getElementById('lStatus');if(!play)return;play.textContent=TT.playing?(TT.paused?'▶ Riprendi':'❚❚ Pausa'):'▶ Ascolta';btn.classList.toggle('on',TT.playing);btn.textContent=TT.playing?(TT.paused?'▶':'❚❚'):'▶ Ascolta';var txt='';if(TT.playing){var cur=seg||TT.segs[TT.idx];var secs=document.querySelectorAll('.chap');var h=cur&&secs[cur.chap]?secs[cur.chap].querySelector('.chap-h'):null;txt=(TT.paused?'In pausa':'In ascolto')+(cur?' · '+(h?h.textContent:'Capitolo '+(cur.chap+1)):'')}else if(LPOS)txt='Riparte dal punto salvato';st.textContent=txt}"+
+   "function lUpd(seg){var play=document.getElementById('lPlay'),btn=document.getElementById('listenBtn'),st=document.getElementById('lStatus');if(!play)return;play.textContent=TT.playing?(TT.paused?'▶ Riprendi':'❚❚ Pausa'):'▶ Ascolta';btn.classList.toggle('on',TT.playing);btn.textContent=TT.playing?(TT.paused?'▶':'❚❚'):'▶ Ascolta';var txt='';if(TT.playing){var cur=seg||TT.segs[TT.idx];var secs=document.querySelectorAll('.chap');var h=cur&&secs[cur.chap]?secs[cur.chap].querySelector('.chap-h'):null;txt=(TT.paused?'In pausa':'In ascolto')+(cur?' · '+(h?h.textContent:'Capitolo '+(cur.chap+1)):'')}else if(LPOS)txt='Riparte dal punto salvato';st.textContent=txt;var bar=document.getElementById('lBar');if(bar){bar.hidden=!TT.playing;var pp=document.getElementById('lPP');if(pp&&TT.playing){pp.querySelector('.ic').textContent=TT.paused?'▶':'❚❚';pp.querySelector('small').textContent=TT.paused?'Riprendi':'Pausa';pp.setAttribute('aria-label',TT.paused?'Riprendi la lettura':'Metti in pausa')}}}"+
+   "function lSegSecs(s){var w=String(s&&s.text||'').split(/\\s+/).filter(Boolean).length;return w/(2.5*(TT.rate||1))}"+
+   "function lJump(i){if(!TT.playing)return;if(i<0)i=0;if(i>=TT.segs.length){lFinish();return}try{speechSynthesis.cancel()}catch(e){}TT.gen++;if(TT.paused){TT.idx=i;var sg=TT.segs[i];if(sg){LPOS={c:sg.chap,s:sg.ci};lSave();sg=lLiveSeg(sg);lHighlight(sg);var mk=TT.marks.length?TT.marks[TT.marks.length-1]:null;try{(mk||sg.el).scrollIntoView({block:'center',behavior:'smooth'})}catch(e){}lUpd(sg)}lMsSync();return}setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(i)},60)}"+
+   "function lStep(d){if(!TT.playing)return;lJump(TT.idx+d)}"+
+   "function lSkip(d){if(!TT.playing)return;var rem=10,i=TT.idx,g=0;while(rem>0&&g++<600){var ni=i+d;if(ni<0||ni>=TT.segs.length)break;i=ni;rem-=lSegSecs(TT.segs[i])}lJump(i)}"+
+   "var LMS={a:null,u:'',on:false,bound:false};"+
+   "function lMsURL(){if(LMS.u)return LMS.u;var sr=8000,n=sr,buf=new ArrayBuffer(44+n),v=new DataView(buf);function ws(o,s){for(var i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))}ws(0,'RIFF');v.setUint32(4,36+n,true);ws(8,'WAVE');ws(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr,true);v.setUint16(32,1,true);v.setUint16(34,8,true);ws(36,'data');v.setUint32(40,n,true);for(var i=0;i<n;i++)v.setUint8(44+i,128);LMS.u=URL.createObjectURL(new Blob([buf],{type:'audio/wav'}));return LMS.u}"+
+   "function lMsBind(){if(LMS.bound||!('mediaSession' in navigator))return;var ms=navigator.mediaSession;function set(a,f){try{ms.setActionHandler(a,f)}catch(e){}}set('play',function(){if(TT.playing&&TT.paused)lRestartSeg()});set('pause',function(){if(TT.playing&&!TT.paused)lPause()});set('stop',function(){lStop()});set('previoustrack',function(){lStep(-1)});set('nexttrack',function(){lStep(1)});set('seekbackward',function(){lSkip(-1)});set('seekforward',function(){lSkip(1)});LMS.bound=true}"+
+   "function lMsUnbind(){if(!LMS.bound||!('mediaSession' in navigator))return;['play','pause','stop','previoustrack','nexttrack','seekbackward','seekforward'].forEach(function(a){try{navigator.mediaSession.setActionHandler(a,null)}catch(e){}});LMS.bound=false}"+
+   "function lMsStart(){try{if(!LMS.a){LMS.a=new Audio();LMS.a.loop=true;LMS.a.src=lMsURL()}LMS.a.play().catch(function(){})}catch(e){}if('mediaSession' in navigator){try{navigator.mediaSession.metadata=new MediaMetadata({title:DOCTITLE||'FFspace',artist:DOCAUTHOR||'',album:'FFspace'})}catch(e){}}LMS.on=true;lMsBind();lMsSync()}"+
+   "function lMsSync(){if(!LMS.on)return;if('mediaSession' in navigator){try{navigator.mediaSession.playbackState=TT.playing?(TT.paused?'paused':'playing'):'none'}catch(e){}}if(LMS.a){if(TT.playing&&!TT.paused)LMS.a.play().catch(function(){});else try{LMS.a.pause()}catch(e){}}}"+
+   "function lMsEnd(){if(!LMS.on)return;LMS.on=false;if(LMS.a){try{LMS.a.pause()}catch(e){}}if('mediaSession' in navigator){try{navigator.mediaSession.metadata=null}catch(e){}try{navigator.mediaSession.playbackState='none'}catch(e){}}lMsUnbind()}"+
    "function lPrim(seg){var sample=seg.text,j;if(sample.length<300)for(j=TT.idx+1;j<TT.segs.length&&TT.segs[j].el===seg.el&&sample.length<300;j++)sample+=' '+TT.segs[j].text;var words=sample.toLowerCase().match(/[a-zàáâãäåèéêëìíîïòóôõöùúûüýÿñçß]+/g)||[];if(words.length<12)return'';var best='',bestN=0,second=0,k,w,n,set;for(k in LHINTS){set={};LHINTS[k].split(' ').forEach(function(x){set[x]=1});n=0;for(w=0;w<words.length;w++)if(set[words[w]])n++;if(n>bestN){second=bestN;bestN=n;best=k}else if(n>second)second=n}if(!best||bestN<4||bestN<second*1.6)return'';return best}"+
    "function lSegsChap(chap){var sec=null;document.querySelectorAll('.chap').forEach(function(s){if(+s.getAttribute('data-i')===chap)sec=s});if(!sec)return null;if(chap===0&&lIsTitle(sec.textContent))return[];var all=[].slice.call(sec.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,blockquote,pre'));var blocks=all.filter(function(el){if(el.classList.contains('chap-h'))return false;var a=el.parentElement;while(a&&a!==sec){if(all.indexOf(a)>=0)return false;a=a.parentElement}return el.textContent.trim().length>0});var segs=[],ci=0;blocks.forEach(function(el){lSplit(el.textContent).forEach(function(s){segs.push({el:el,chap:chap,ci:ci++,start:s.start,end:s.end,text:s.text})})});return segs}"+
    "function lRefreshChap(chap){var fresh=lSegsChap(chap);if(!fresh)return;var first=-1,last=-1,i;for(i=0;i<TT.segs.length;i++)if(TT.segs[i].chap===chap){if(first<0)first=i;last=i}if(first<0)return;var cur=TT.segs[TT.idx],delta=fresh.length-(last-first+1);TT.segs.splice.apply(TT.segs,[first,last-first+1].concat(fresh));if(TT.idx<first)return;if(TT.idx>last){TT.idx+=delta;return}var pos=fresh.length-1;for(i=0;i<fresh.length;i++)if(fresh[i].ci>=cur.ci){pos=i;break}TT.idx=first+pos}"+
@@ -2507,11 +2557,11 @@ function buildReaderDoc(g,startPct){
    "function lBestVoice(tag){var vs=lVoices();if(!vs.length||!tag)return null;var want=lNormLang(tag),prim=want.split('-')[0],i,cand=[];for(i=0;i<vs.length;i++)if(lNormLang(vs[i].lang)===want)return vs[i];for(i=0;i<vs.length;i++)if(lNormLang(vs[i].lang).split('-')[0]===prim)cand.push(vs[i]);if(!cand.length)return null;for(i=0;i<cand.length;i++)if(cand[i].localService)return cand[i];for(i=0;i<cand.length;i++)if(cand[i].default)return cand[i];return cand[0]}"+
    "var LHINTS={it:'il lo la i gli le un uno una di a da in con su per tra fra che e è non si del dello della dei degli delle al allo alla nel nello nella nei negli nelle questo questa questi queste sono era erano anche più come lui lei loro quando dove molto poco dopo prima essere',en:'the of and a an to in is you that it he was for on are with as his they be at one have this from or had by but not what all were we when your can said there use each which she how their if will up other about out many then them these so some her would make like him into time has look two more no way could people my than first been who its now find long down day did get come made may part',fr:'le la les de des du un une et est dans qui que au aux en ce il ne se pas sur plus par pour sont cette ces ses avec tout comme aussi mais ou donc alors très chez sans sous entre vers après avant peu moins même encore toujours jamais',es:'el la los las un una de en y que es se del por con no su al lo como más pero sus le ya o este sí porque esta son entre cuando muy sin sobre también me hasta hay donde quien desde todo nos durante uno les ni contra eso ante ellos esto antes algunos qué unos yo otro otras otra él tanto esa estos mucho quienes nada todos',de:'der die das den dem des ein eine einen einem und ist in zu von mit sich auf für im nicht als auch es an werden aus er sie nach wird bei einer um am sind noch wie einem über so zum haben nur oder aber vor bis mehr durch man war',pt:'o a os as um uma de em do da dos das e é que se por com não no na nos nas pelo pela ao aos para como mais mas seu sua seus suas ou quando muito já eu também só ser são foi era lhe isso ele ela entre depois sem mesmo ter quem me esse eles está você tudo'};"+
    "function lDetect(){var sample='',i;for(i=0;i<TT.segs.length&&sample.length<4000;i++)sample+=' '+TT.segs[i].text;var words=sample.toLowerCase().match(/[a-zàáâãäåèéêëìíîïòóôõöùúûüýÿñçß]+/g)||[];if(words.length<25)return'';var best='',bestN=0,second=0,k,w,n,set;for(k in LHINTS){set={};LHINTS[k].split(' ').forEach(function(x){set[x]=1});n=0;for(w=0;w<words.length;w++)if(set[words[w]])n++;if(n>bestN){second=bestN;bestN=n;best=k}else if(n>second)second=n}if(!best||bestN<6||bestN<second*1.6)return'';var langs=[],vs=lVoices();vs.forEach(function(v){var nl=lNormLang(v.lang);if(nl&&langs.indexOf(nl)<0)langs.push(nl)});var cand=langs.filter(function(l){return l.split('-')[0]===best});if(!cand.length)return best;var pref={en:'en-US',it:'it-IT',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-BR',ja:'ja-JP'}[best];if(pref&&cand.indexOf(pref)>=0)return pref;return cand[0]}"+
-   "function lPlay(){if(!lSup()){lMsg();return}if(TT.playing&&TT.paused){lRestartSeg();return}if(!lVoices().length){if(TT._vw)return;TT._vw=1;var dn=false;var go=function(){if(dn)return;dn=true;TT._vw=0;lPlay()};try{speechSynthesis.addEventListener('voiceschanged',go)}catch(e){}setTimeout(go,800);return}lApply();TT.segs=lSegs();TT.idx=lStartIdx();TT.liveChap=TT.segs[TT.idx]?TT.segs[TT.idx].chap:-1;var tl=lDetect();if(tl&&lNormLang(tl).split('-')[0]===lNormLang(TT.lang||lTag()).split('-')[0])tl='';if(!tl)tl=lTransLang();if(tl){TT.lang=tl;TT.voice=lBestVoice(tl);var lsx=document.getElementById('lLang');if(lsx){for(var oi=0;oi<lsx.options.length;oi++)if(lNormLang(lsx.options[oi].value)===lNormLang(tl))lsx.value=lsx.options[oi].value}}if(!TT.segs.length){var b=document.getElementById('lMsg');b.hidden=false;b.textContent='In questa storia non c\\'è testo da leggere ad alta voce.';return}try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.playing=true;TT.paused=false;lWl(true);lTimer(true);lUpd();try{showPop(null)}catch(e){}var i=TT.idx;setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(i)},90)}"+
-   "function lPause(){if(!TT.playing)return;TT.paused=true;TT.gen++;try{speechSynthesis.cancel()}catch(e){}lWl(false);lTimer(false);lUpd()}"+
-   "function lStop(){if(TT.playing&&TT.segs[TT.idx]){LPOS={c:TT.segs[TT.idx].chap,s:TT.segs[TT.idx].ci};lSave()}TT.playing=false;TT.paused=false;TT.gen++;try{speechSynthesis.cancel()}catch(e){}lClearHl();lWl(false);lTimer(false);lUpd()}"+
-   "function lFinish(){TT.playing=false;TT.paused=false;LPOS=null;lSave();lClearHl();lWl(false);lTimer(false);lUpd();var st=document.getElementById('lStatus');if(st)st.textContent='Fine della storia'}"+
-   "function lRestartSeg(){if(!TT.playing)return;try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.paused=false;lWl(true);lTimer(true);var i=TT.idx;setTimeout(function(){if(TT.playing)lSpeak(i)},90);lUpd()}"+
+   "function lPlay(){if(!lSup()){lMsg();return}if(TT.playing&&TT.paused){lRestartSeg();return}if(!lVoices().length){if(TT._vw)return;TT._vw=1;var dn=false;var go=function(){if(dn)return;dn=true;TT._vw=0;lPlay()};try{speechSynthesis.addEventListener('voiceschanged',go)}catch(e){}setTimeout(go,800);return}lApply();TT.segs=lSegs();TT.idx=lStartIdx();TT.liveChap=TT.segs[TT.idx]?TT.segs[TT.idx].chap:-1;var tl=lDetect();if(tl&&lNormLang(tl).split('-')[0]===lNormLang(TT.lang||lTag()).split('-')[0])tl='';if(!tl)tl=lTransLang();if(tl){TT.lang=tl;TT.voice=lBestVoice(tl);var lsx=document.getElementById('lLang');if(lsx){for(var oi=0;oi<lsx.options.length;oi++)if(lNormLang(lsx.options[oi].value)===lNormLang(tl))lsx.value=lsx.options[oi].value}}if(!TT.segs.length){var b=document.getElementById('lMsg');b.hidden=false;b.textContent='In questa storia non c\\'è testo da leggere ad alta voce.';return}try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.playing=true;TT.paused=false;lWl(true);lTimer(true);lMsStart();lUpd();try{showPop(null)}catch(e){}var i=TT.idx;setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(i)},90)}"+
+   "function lPause(){if(!TT.playing)return;TT.paused=true;TT.gen++;try{speechSynthesis.cancel()}catch(e){}lWl(false);lTimer(false);lUpd();lMsSync()}"+
+   "function lStop(){if(TT.playing&&TT.segs[TT.idx]){LPOS={c:TT.segs[TT.idx].chap,s:TT.segs[TT.idx].ci};lSave()}TT.playing=false;TT.paused=false;TT.gen++;try{speechSynthesis.cancel()}catch(e){}lClearHl();lWl(false);lTimer(false);lUpd();lMsEnd()}"+
+   "function lFinish(){TT.playing=false;TT.paused=false;LPOS=null;lSave();lClearHl();lWl(false);lTimer(false);lUpd();lMsEnd();var st=document.getElementById('lStatus');if(st)st.textContent='Fine della storia'}"+
+   "function lRestartSeg(){if(!TT.playing)return;try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.paused=false;lWl(true);lTimer(true);var i=TT.idx;setTimeout(function(){if(TT.playing)lSpeak(i)},90);lUpd();lMsSync()}"+
    "function lRestartAll(){LPOS=null;lSave();lClearHl();TT.segs=lSegs();TT.idx=0;TT.liveChap=TT.segs.length?TT.segs[0].chap:-1;var tl=lDetect();if(tl&&lNormLang(tl).split('-')[0]!==lNormLang(TT.lang||lTag()).split('-')[0]){TT.lang=tl;TT.voice=lBestVoice(tl)}if(TT.playing){try{speechSynthesis.cancel()}catch(e){}TT.gen++;TT.paused=false;lWl(true);lTimer(true);setTimeout(function(){if(TT.playing&&!TT.paused)lSpeak(0)},90)}lUpd()}"+
    "function lDefLang(langs){var primary=lTag().split('-')[0];var cand=langs.filter(function(l){return l.toLowerCase().split('-')[0]===primary});if(!cand.length)return'';var pref={en:'en-US',it:'it-IT',fr:'fr-FR',es:'es-ES',de:'de-DE',pt:'pt-BR',ja:'ja-JP'}[primary];if(pref&&cand.indexOf(pref)>=0)return pref;if(cand.indexOf(lTag())>=0)return lTag();return cand[0]}"+
    "function lFillVoice(lang){var vs=document.getElementById('lVoice');vs.innerHTML='';var o=document.createElement('option');o.value='';o.textContent='Automatica (la migliore per questa lingua)';vs.appendChild(o);lVoices().filter(function(v){return lNormLang(v.lang)===lNormLang(lang)}).forEach(function(v){var op=document.createElement('option');op.value=v.voiceURI;op.textContent=v.name;if(v.voiceURI===LVOICE)op.selected=true;vs.appendChild(op)})}"+
@@ -2521,6 +2571,12 @@ function buildReaderDoc(g,startPct){
    "document.getElementById('lPlay').addEventListener('click',function(){if(TT.playing&&!TT.paused)lPause();else{var was=TT.playing;lPlay();if(!was)try{showPop(null)}catch(e){}}});"+
    "document.getElementById('lStop').addEventListener('click',lStop);"+
    "document.getElementById('lRestart').addEventListener('click',lRestartAll);"+
+   "document.getElementById('lPrevS').addEventListener('click',function(){lStep(-1)});"+
+   "document.getElementById('lNextS').addEventListener('click',function(){lStep(1)});"+
+   "document.getElementById('lBack10').addEventListener('click',function(){lSkip(-1)});"+
+   "document.getElementById('lFwd10').addEventListener('click',function(){lSkip(1)});"+
+   "document.getElementById('lPP').addEventListener('click',function(){if(TT.playing&&!TT.paused)lPause();else if(TT.playing)lPlay()});"+
+   "document.getElementById('lStopB').addEventListener('click',lStop);"+
    "document.getElementById('lLang').addEventListener('change',function(){LLANG=this.value||'';LVOICE='';lFillVoice(LLANG);lApply();lMsg();if(TT.playing)lRestartSeg()});"+
    "document.getElementById('lVoice').addEventListener('change',function(){lApply();if(TT.playing)lRestartSeg()});"+
    "document.querySelectorAll('#lSpeed [data-rate]').forEach(function(b){b.addEventListener('click',function(){document.querySelectorAll('#lSpeed [data-rate]').forEach(function(x){x.classList.toggle('on',x===b)});TT.rate=parseFloat(b.getAttribute('data-rate'))||1;if(TT.playing&&!TT.paused)lRestartSeg()})});"+
@@ -2536,6 +2592,14 @@ function buildReaderDoc(g,startPct){
    '<form class="find" id="findForm"><input id="findQ" type="search" placeholder="Cerca nella storia…" autocomplete="off"><span class="fc" id="findCount"></span><button class="fn" type="button" id="findPrev" aria-label="Risultato precedente">↑</button><button class="fn" type="submit" aria-label="Risultato successivo">↓</button></form></div>'+
    '<article class="book" id="book" data-ps="2">'+body+"</article>"+
    '<div id="pct" aria-hidden="true">0%</div><div id="prog" aria-hidden="true"><i id="progFill"></i></div>'+
+   '<div id="lBar" hidden role="group" aria-label="Comandi della lettura ad alta voce">'+
+   '<button type="button" id="lPrevS" aria-label="Frase precedente"><span class="ic" aria-hidden="true">⏮&#65038;</span><small>Frase prec.</small></button>'+
+   '<button type="button" id="lBack10" aria-label="Indietro di 10 secondi"><span class="ic" aria-hidden="true">↩</span><small>−10 sec</small></button>'+
+   '<button type="button" id="lPP" aria-label="Metti in pausa"><span class="ic" aria-hidden="true">❚❚</span><small>Pausa</small></button>'+
+   '<button type="button" id="lStopB" aria-label="Ferma la lettura"><span class="ic" aria-hidden="true">⏹&#65038;</span><small>Stop</small></button>'+
+   '<button type="button" id="lFwd10" aria-label="Avanti di 10 secondi"><span class="ic" aria-hidden="true">↪</span><small>+10 sec</small></button>'+
+   '<button type="button" id="lNextS" aria-label="Frase successiva"><span class="ic" aria-hidden="true">⏭&#65038;</span><small>Frase succ.</small></button>'+
+   '</div>'+
    '<div class="scrim" id="scrim" hidden></div>'+
    '<div class="pop" id="aaPop" hidden>'+
    '<span class="grab" aria-hidden="true"></span>'+
@@ -2560,6 +2624,7 @@ function buildReaderDoc(g,startPct){
    '<div class="sec"><span class="lbl">Voce</span><select class="lsel" id="lVoice" aria-label="Voce della lettura ad alta voce"></select></div>'+
    '<div class="sec"><button class="btn" id="lRestart" type="button">↺ Ricomincia dall\'inizio</button></div>'+
    '<p class="lnote">La lettura usa la voce già presente nel telefono: niente costi e niente da scaricare. Legge tutta la storia, capitolo dopo capitolo, e il punto di ascolto si salva come quello di lettura: se chiudi la scheda, alla riapertura si riparte da lì. Storia in un\'altra lingua? Per tradurla apri il menu ⋮ di Chrome e tocca «Traduci pagina». Se hai tradotto la pagina con Chrome, Ascolta legge la traduzione che vedi sullo schermo, frase per frase, ognuna con la voce della sua lingua.</p>'+
+   '<p class="lnote">Quando la lettura è partita, in basso compare il player: da lì torni indietro o vai avanti di una frase o di circa 10 secondi (il salto è stimato contando le parole delle frasi, quindi è approssimativo). La lettura continua anche se riduci Chrome a icona o blocchi lo schermo: abbassando la tendina del telefono trovi la notifica con il titolo della storia e gli stessi comandi del player, come per la musica. Se invece chiudi Chrome dalle app recenti, la lettura si ferma; in rari casi il risparmio batteria del telefono può interromperla.</p>'+
    "</div>"+
    '<div class="pop" id="infoPop" hidden>'+
    '<span class="grab" aria-hidden="true"></span>'+
@@ -3016,7 +3081,7 @@ const INFO={
   step3:{t:"Decidi tu, resta a te",b:"<p>Tutto resta salvato in modo permanente nel tuo browser: anche chiudendo tutte le schede, lo ritrovi alla prossima apertura. Per sicurezza, ogni tanto salva una copia con il pulsante <b>Salva copia</b> in fondo alla pagina e conservala su Drive o su WhatsApp: con <b>Ripristina copia</b> ritrovi tutto anche su un telefono nuovo.</p>"},
   backup:{t:"Copia di sicurezza",b:"<p>Con <b>Salva copia</b> scarichi un unico file con tutto: le storie e i loro file originali, il punto di lettura di ognuna, i segnalibri messi nel testo, preferite, stato, voti, note, scaffali, il tema scelto e la selezione in corso. Con <b>Ripristina copia</b> scegli quel file e ritrovi tutto com’era.</p><p>Onestamente: i dati restano normalmente salvati anche chiudendo Chrome e spegnendo il telefono, ma <b>non è garantito al 100%</b>. Se cancelli i dati di navigazione, oppure il telefono finisce lo spazio, Chrome o Android possono cancellare anche i dati di questo sito. Per stare tranquilla, salva una copia ogni tanto e conservala fuori dal browser: su Google Drive, oppure inviala a te stessa su WhatsApp.</p>"},
   drawer:{t:"Dettagli della storia",b:"<p>Da qui: <b>Leggi</b> apre la storia qui, in questa stessa scheda, al posto della libreria (con «← Libreria» torni indietro); <b>Apri in un’altra scheda</b> la apre invece in una nuova scheda di Chrome, e la libreria resta dov’è. In entrambi i casi riprendi dal punto di lettura salvato. <b>Scarica il file</b> salva il file originale sul telefono, e sotto puoi cambiare stato e scaffali, dare un voto, scrivere la data di lettura e le tue note.</p><p>Se scrivi una nota, la storia compare anche nello scaffale <b>Segnalibri</b>. Con <b>Modifica dettagli</b> correggi titolo e autrice; <b>Rimuovi dalla libreria</b> cancella la storia da qui.</p>"},
-  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Ogni capitolo è una pagina a sé: la barra con ‹, i numeri dei capitoli e › — sotto il titolo e di nuovo in fondo al capitolo — passa da un capitolo all’altro, e con «Vai al capitolo» salti al numero che scrivi; la lente cerca una parola in tutta la storia e, saltando a un risultato, apre la pagina di quel capitolo.</p><p>In basso a destra la percentuale dice quanto hai letto dell’intera storia, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi, capitolo e punto dentro al capitolo: quando riapri la storia, riprendi da dove eri, anche dopo un aggiornamento della pagina.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana. Finché l’ascolto non è partito, il pulsante mostra solo «Ascolta» e apre il pannello delle impostazioni; quando dal pannello premi «Ascolta», il pannello si chiude, la scritta sparisce e il pulsante si divide in due: la parte grande mostra ❚❚ mentre la voce legge e ▶ quando è in pausa, e mette in pausa o riprende senza aprire il pannello; la freccetta ⌄ riapre le impostazioni mentre la voce continua a leggere, così cambi voce, lingua e velocità senza fermarla. Mentre la voce legge, la frase in corso resta sempre al centro della pagina, con quella prima e quella dopo visibili intorno.</p><p><b>Segnalibri nel testo</b>: il pulsante a forma di segnalibro nella barra apre «I miei segnalibri». Con «Metti un segnalibro» e poi toccando il punto esatto del testo, si apre un foglietto: scegli il colore del segno (rosso, arancione, giallo, verde, blu o viola) e, se vuoi, gli dai un titolo e una piccola nota — così il segnalibro serve sia a ritrovare il punto sia a segnarti qualcosa da rileggere o approfondire. Puoi metterne quante vuoi, anche in mezzo a una frase. Dall’elenco, con «Modifica» cambi colore, titolo e nota di un segnalibro già messo; toccando un segno nel testo compare un piccolo riquadro con il suo titolo e la sua nota, senza toglierlo, e dall’elenco salti a quel punto o lo togli da lì. I segnalibri si salvano con la storia (anche nella copia di sicurezza) e, riaprendola, la lettura riparte dal segnalibro più recente.</p>"},
+  reader:{t:"Il lettore",b:"<p><b>Aa</b> apre le impostazioni di lettura: carattere, dimensione del testo, interlinea, allineamento e larghezza della pagina. <b>Colore pagina</b> (Carta, Seppia o Notte) cambia solo lo sfondo e il testo della storia; la barra in alto, i pulsanti e le impostazioni seguono invece il tema scelto nella schermata home. <b>Nascondi la formattazione dell'autrice</b> toglie caratteri, colori e allineamenti originali della storia. Ogni capitolo è una pagina a sé: la barra con ‹, i numeri dei capitoli e › — sotto il titolo e di nuovo in fondo al capitolo — passa da un capitolo all’altro, e con «Vai al capitolo» salti al numero che scrivi; la lente cerca una parola in tutta la storia e, saltando a un risultato, apre la pagina di quel capitolo.</p><p>In basso a destra la percentuale dice quanto hai letto dell’intera storia, e la barretta sottile in fondo alla pagina avanza mentre scorri. Il punto di lettura si salva da solo mentre leggi, capitolo e punto dentro al capitolo: quando riapri la storia, riprendi da dove eri, anche dopo un aggiornamento della pagina.</p><p><b>Ascolta</b> legge tutta la storia ad alta voce con la voce del telefono, frase per frase e capitolo dopo capitolo: play, pausa, stop e velocità, la frase in corso evidenziata mentre legge, e il punto di ascolto salvato come quello di lettura — se chiudi il lettore, alla riapertura si riparte da lì. La voce segue la lingua della storia, non quella del sito: nel pannello Ascolta puoi scegliere un’altra lingua o un’altra voce tra quelle presenti sul telefono, e la scelta resta salvata per quella storia. Se la storia è in un’altra lingua e vuoi leggerla in italiano, usa il menu ⋮ di Chrome → <b>Traduci pagina</b>: se hai tradotto la pagina con Chrome, Ascolta legge la traduzione e usa la voce italiana. Finché l’ascolto non è partito, il pulsante mostra solo «Ascolta» e apre il pannello delle impostazioni; quando dal pannello premi «Ascolta», il pannello si chiude, la scritta sparisce e il pulsante si divide in due: la parte grande mostra ❚❚ mentre la voce legge e ▶ quando è in pausa, e mette in pausa o riprende senza aprire il pannello; la freccetta ⌄ riapre le impostazioni mentre la voce continua a leggere, così cambi voce, lingua e velocità senza fermarla. Mentre la voce legge, la frase in corso resta sempre al centro della pagina, con quella prima e quella dopo visibili intorno.</p><p>Quando la lettura è partita, in basso nel lettore compare il <b>player della lettura</b>: frase precedente e frase successiva, indietro e avanti di circa 10 secondi (il salto è stimato contando le parole delle frasi, quindi è approssimativo), pausa/riprendi e stop. La lettura continua anche con Chrome ridotto a icona o a schermo bloccato, e si comanda anche dalla <b>notifica del telefono</b>: abbassando la tendina trovi il titolo della storia e gli stessi comandi del player, come per la musica. Se invece Chrome viene chiuso dalle app recenti, la lettura si ferma; in rari casi anche il risparmio batteria del telefono può interromperla.</p><p><b>Segnalibri nel testo</b>: il pulsante a forma di segnalibro nella barra apre «I miei segnalibri». Con «Metti un segnalibro» e poi toccando il punto esatto del testo, si apre un foglietto: scegli il colore del segno (rosso, arancione, giallo, verde, blu o viola) e, se vuoi, gli dai un titolo e una piccola nota — così il segnalibro serve sia a ritrovare il punto sia a segnarti qualcosa da rileggere o approfondire. Puoi metterne quante vuoi, anche in mezzo a una frase. Dall’elenco, con «Modifica» cambi colore, titolo e nota di un segnalibro già messo; toccando un segno nel testo compare un piccolo riquadro con il suo titolo e la sua nota, senza toglierlo, e dall’elenco salti a quel punto o lo togli da lì. I segnalibri si salvano con la storia (anche nella copia di sicurezza) e, riaprendola, la lettura riparte dal segnalibro più recente.</p>"},
   novita:{t:"Novità e storia delle versioni",b:()=>"<p>Versione attuale: "+esc(APP_VERSION)+". Qui sotto trovi le novità di ogni versione, dalla più recente alla più vecchia:</p>"+newsHistoryHTML(APP_CHANGELOG.slice().reverse())+"<p>Quando esce una versione nuova, il sito te lo dice da solo: compare un avviso in alto con il pulsante per aggiornare la pagina, e dopo l'aggiornamento il foglio «Novità» compare una volta sola, da solo, con le novità di tutte le versioni uscite dall'ultima che avevi visto, in ordine.</p>"},
   help:{t:"Come si usa, passo passo",b:"<ol><li>Tocca <b>Aggiungi</b> in alto (su telefono) oppure <b>Link Drive / Carica file</b>.</li><li>Per caricare una storia che hai sul telefono: tocca il riquadro tratteggiato e scegli il file (EPUB, PDF, HTML, TXT, MOBI, AZW3, oppure il file <b>.mht</b> salvato da Chrome).</li><li>Per un link Google Drive: incolla il link nella casella in alto e tocca <b>Aggiungi</b>.</li><li>La storia compare sullo scaffale. Toccala per vedere i dettagli, poi tocca <b>Leggi</b> per leggerla qui, in questa scheda, oppure <b>Apri in un’altra scheda</b> per aprirla in una nuova scheda di Chrome, così lo scaffale resta dov’è.</li><li>Quando torni sullo scaffale, la barra rosa sotto la storia ti dice a che punto eri arrivata: riaprendola, riprendi da lì.</li><li>Con <b>Seleziona</b> scegli più storie insieme: toccale per selezionarle (si evidenziano), poi con la barra in basso cambi stato o scaffale, le metti tra le preferite o le togli, oppure le rimuovi tutte in una volta. Ogni azione ti conferma cosa ha fatto, e la selezione resta salvata anche se ricarichi la pagina.</li></ol><p><b>Se qualcosa non funziona</b>, gli screenshot utili sono 4: (1) lo scaffale con le storie caricate, (2) la finestrella «Aggiungi un link Drive o carica le storie» aperta, (3) il messaggio di errore esatto, parola per parola, (4) la pagina di lettura aperta. Per fare uno screenshot: tasti <b>Accensione + Volume giù</b> insieme per un secondo. La registrazione schermo si avvia dal pannello che scende dall’alto (icona «Registrazione schermo»), poi rifai i passi che non funzionano e fermala: 20–30 secondi bastano.</p>"}
 };
@@ -3821,6 +3886,184 @@ function ttsSavePos(seg){
   g.listenPos={c:seg.chap,s:seg.ci};
   persist();
 }
+/* ================= player della lettura: salti e comandi =================
+   The compact player bar at the bottom of the reader (and the
+   phone's media notification, below) move the reading by whole
+   sentences or by about ten seconds. A sentence's length in
+   seconds is only an ESTIMATE — its words ÷ (2.5 × speed), the
+   average words-per-second of the phone's voices — so a ±10s
+   jump walks sentence by sentence, adding up the estimates,
+   until it has covered roughly ten seconds; the help texts say
+   the jump is approximate. Every jump goes through ttsJumpTo /
+   ttsShowSeg, so the index, the highlight, the saved listening
+   point and the media session all move together, exactly as in
+   normal reading. Jumps cross chapter pages both ways: back from
+   a chapter's first sentence lands on the LAST sentence of the
+   previous chapter that has text, forward past the end turns the
+   page like the automatic advance does */
+function ttsSegSecs(seg){
+  const w=String(seg&&seg.text||"").split(/\s+/).filter(Boolean).length;
+  return w/(2.5*(TTS.rate||1));
+}
+/* aim the reading at sentence i WITHOUT speaking it (the reading
+   is paused): index, saved point, highlight and screen move */
+function ttsShowSeg(i){
+  const seg=TTS.segs[i]; if(!seg)return;
+  TTS.idx=i; ttsSavePos(seg);
+  const live=ttsLiveSeg(seg); ttsHighlight(live);
+  try{const mk=seg.el.querySelector("mark.tts-hl"); (mk||seg.el).scrollIntoView({block:"center",behavior:"smooth"})}catch(e){}
+  updListenUI(seg);
+}
+/* jump the reading to sentence i of the page on screen: the
+   current utterance is cancelled and the target sentence is
+   spoken from its start — or only shown, when paused */
+function ttsJumpTo(i){
+  if(!TTS.playing||!TTS.segs[i])return;
+  if(ttsSupported()){try{speechSynthesis.cancel()}catch(e){}}
+  TTS.gen++;
+  if(TTS.paused){ttsShowSeg(i); return}
+  setTimeout(()=>{if(TTS.playing&&!TTS.paused)ttsSpeak(i)},60);
+}
+/* turn the reader page one chapter in direction dir, looking for
+   the nearest chapter that has sentences; TTS.segs is rebuilt
+   for it and the landing index comes back (0 going forward, the
+   last sentence going back). When no chapter that way has
+   anything to say, page, segments and saved points are put back
+   exactly as they were and -1 comes back */
+function ttsTurnPage(dir){
+  const g=ficById(TTS.ficId); if(!g)return -1;
+  const oChap=R.chap, oSegs=TTS.segs, oLive=TTS.liveChap, oFrac=g.chapterFrac, oProg=g.progress;
+  let c=oChap+dir;
+  while(c>=0&&c<R.chs.length){
+    R.chap=c;
+    g.chapterIdx=c; g.chapterFrac=0; g.progress=totalProgressFor(g,c,0); persist();
+    renderChapterPage();
+    const segs=buildChapterSegs(g,c)||[];
+    if(segs.length){
+      const sc=$("#readerScroll"); if(sc)sc.scrollTop=0;
+      TTS.segs=segs; TTS.liveChap=c;
+      return dir>0?0:segs.length-1;
+    }
+    c+=dir;
+  }
+  R.chap=oChap;
+  g.chapterIdx=oChap; g.chapterFrac=oFrac; g.progress=oProg; persist();
+  renderChapterPage();
+  TTS.segs=oSegs; TTS.liveChap=oLive;
+  return -1;
+}
+function ttsStepSentence(dir){
+  if(!TTS.playing)return;
+  const ni=TTS.idx+dir;
+  if(ni>=0&&ni<TTS.segs.length){ttsJumpTo(ni); return}
+  const landed=ttsTurnPage(dir);
+  if(landed>=0){ttsJumpTo(landed); return}
+  /* no sentence that way: forward past the very last sentence
+     ends the story; backward at the very first one just
+     restarts that sentence */
+  if(dir>0){ttsFinish(); return}
+  ttsJumpTo(TTS.idx);
+}
+function ttsSkipSeconds(dir){
+  if(!TTS.playing)return;
+  let remain=10, i=TTS.idx, guard=0;
+  while(remain>0&&guard++<600){
+    const ni=i+dir;
+    if(ni>=0&&ni<TTS.segs.length){i=ni; remain-=ttsSegSecs(TTS.segs[i])}
+    else{
+      const landed=ttsTurnPage(dir);
+      if(landed<0)break;
+      i=landed; remain-=ttsSegSecs(TTS.segs[i]);
+    }
+  }
+  ttsJumpTo(i);
+}
+/* ================= audio in background: Media Session =================
+   speechSynthesis alone gives Chrome for Android no media
+   session: minimising Chrome would leave the reading with no
+   notification and no controls. So, while Ascolta is on, a
+   SILENT audio file (one second of silence, generated here as a
+   tiny WAV and looped, volume untouched because the file itself
+   is silent) plays alongside the voice: that is what makes
+   Chrome hold a media session for this page, so Android shows
+   its media notification — story title, author, «FFspace» —
+   when Chrome is minimised or the screen is locked, like
+   YouTube Music. The Media Session handlers point the
+   notification's buttons at the same commands as the player
+   bar: play resumes, pause pauses, previous/next track move by
+   one sentence, seek backward/forward jump ∓/±10 seconds, stop
+   stops. The handlers are registered when the reading starts
+   and removed when it stops or ends; the silent file plays
+   only while the voice reads (paused when the reading is
+   paused, stopped when it ends), and playbackState follows the
+   reading at every change. If Chrome is closed from the recent
+   apps the page dies with it and the reading stops — no site
+   can prevent that, and the help texts say so */
+let msAudio=null, msAudioURL="", msActive=false, msBound=false;
+function msSilentURL(){
+  if(msAudioURL)return msAudioURL;
+  const sr=8000, n=sr, buf=new ArrayBuffer(44+n), v=new DataView(buf);
+  const ws=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i))};
+  ws(0,"RIFF"); v.setUint32(4,36+n,true); ws(8,"WAVE"); ws(12,"fmt ");
+  v.setUint32(16,16,true); v.setUint16(20,1,true); v.setUint16(22,1,true);
+  v.setUint32(24,sr,true); v.setUint32(28,sr,true); v.setUint16(32,1,true); v.setUint16(34,8,true);
+  ws(36,"data"); v.setUint32(40,n,true);
+  for(let i=0;i<n;i++)v.setUint8(44+i,128); /* 8-bit PCM silence */
+  msAudioURL=URL.createObjectURL(new Blob([buf],{type:"audio/wav"}));
+  return msAudioURL;
+}
+function msBind(){
+  if(msBound||!("mediaSession" in navigator))return;
+  const ms=navigator.mediaSession, set=(a,f)=>{try{ms.setActionHandler(a,f)}catch(e){}};
+  set("play",()=>{if(TTS.playing&&TTS.paused)ttsPlay()});
+  set("pause",()=>{if(TTS.playing&&!TTS.paused)ttsPause()});
+  set("stop",()=>ttsStop());
+  set("previoustrack",()=>ttsStepSentence(-1));
+  set("nexttrack",()=>ttsStepSentence(1));
+  set("seekbackward",()=>ttsSkipSeconds(-1));
+  set("seekforward",()=>ttsSkipSeconds(1));
+  msBound=true;
+}
+function msUnbind(){
+  if(!msBound||!("mediaSession" in navigator))return;
+  ["play","pause","stop","previoustrack","nexttrack","seekbackward","seekforward"].forEach(a=>{try{navigator.mediaSession.setActionHandler(a,null)}catch(e){}});
+  msBound=false;
+}
+function msStart(){
+  const g=ficById(TTS.ficId||R.id);
+  try{
+    if(!msAudio){msAudio=new Audio(); msAudio.loop=true; msAudio.preload="auto"; msAudio.src=msSilentURL()}
+    msAudio.play().catch(()=>{});
+  }catch(e){}
+  if("mediaSession" in navigator&&g){
+    try{
+      const art=[];
+      try{art.push({src:new URL("icon.webp",document.baseURI).href,sizes:"512x512",type:"image/webp"})}catch(e){}
+      navigator.mediaSession.metadata=new MediaMetadata({title:g.title||"FFspace",artist:g.author||"",album:"FFspace",artwork:art});
+    }catch(e){}
+  }
+  msActive=true; msBind(); msSync();
+}
+/* playbackState (and the silent file with it) follows the
+   reading: playing while the voice reads, paused while paused */
+function msSync(){
+  if(!msActive)return;
+  if("mediaSession" in navigator){try{navigator.mediaSession.playbackState=TTS.playing?(TTS.paused?"paused":"playing"):"none"}catch(e){}}
+  if(msAudio){
+    if(TTS.playing&&!TTS.paused)msAudio.play().catch(()=>{});
+    else{try{msAudio.pause()}catch(e){}}
+  }
+}
+function msEnd(){
+  if(!msActive)return;
+  msActive=false;
+  if(msAudio){try{msAudio.pause()}catch(e){}}
+  if("mediaSession" in navigator){
+    try{navigator.mediaSession.metadata=null}catch(e){}
+    try{navigator.mediaSession.playbackState="none"}catch(e){}
+  }
+  msUnbind();
+}
 /* Ascolta reaches the end of this chapter's page: the reading
    turns the page by itself — the next chapter is rendered, its
    sentences are built from the page as it is now, and the voice
@@ -3978,7 +4221,7 @@ function ttsPlay(){
   try{speechSynthesis.cancel()}catch(e){}
   TTS.gen++;
   TTS.playing=true; TTS.paused=false; TTS.started=true;
-  ttsWl(true); ttsTimer(true); updListenUI();
+  ttsWl(true); ttsTimer(true); msStart(); updListenUI();
   const i=TTS.idx; setTimeout(()=>{if(TTS.playing&&!TTS.paused)ttsSpeak(i)},90);
 }
 function ttsPause(){
@@ -3989,18 +4232,18 @@ function ttsPause(){
      resuming simply speaks that sentence again from its start */
   TTS.paused=true; TTS.gen++;
   if(ttsSupported()){try{speechSynthesis.cancel()}catch(e){}}
-  ttsWl(false); ttsTimer(false); updListenUI();
+  ttsWl(false); ttsTimer(false); updListenUI(); msSync();
 }
 function ttsStop(){
   if(TTS.playing&&TTS.segs[TTS.idx])ttsSavePos(TTS.segs[TTS.idx]);
   TTS.playing=false; TTS.paused=false; TTS.gen++;
   if(ttsSupported()){try{speechSynthesis.cancel()}catch(e){}}
-  ttsClearHl(); ttsWl(false); ttsTimer(false); updListenUI();
+  ttsClearHl(); ttsWl(false); ttsTimer(false); msEnd(); updListenUI();
 }
 function ttsFinish(){
   const g=ficById(TTS.ficId);
   TTS.playing=false; TTS.paused=false;
-  ttsClearHl(); ttsWl(false); ttsTimer(false);
+  ttsClearHl(); ttsWl(false); ttsTimer(false); msEnd();
   if(g){g.listenPos=null; persist()}
   updListenUI();
   const st=$("#listenStatus"); if(st)st.textContent="Fine della storia";
@@ -4012,7 +4255,7 @@ function ttsRestartSeg(){
   TTS.gen++;
   TTS.paused=false; ttsWl(true); ttsTimer(true);
   const i=TTS.idx; setTimeout(()=>{if(TTS.playing)ttsSpeak(i)},90);
-  updListenUI();
+  updListenUI(); msSync();
 }
 function updListenUI(seg){
   const main=$("#listenMain"), pill=$("#listenPill"), st=$("#listenStatus");
@@ -4038,6 +4281,24 @@ function updListenUI(seg){
     txt=(TTS.paused?"In pausa":"In ascolto")+(cur&&chs[cur.chap]?" · "+(chs[cur.chap].title||("Capitolo "+(cur.chap+1))):"");
   }else if(g&&g.listenPos)txt="Riparte dal punto salvato";
   st.textContent=txt;
+  /* the player bar at the bottom of the reader: visible exactly
+     while the reading is on (reading or paused), its play/pause
+     button mirroring the state, the sentence buttons dimmed at
+     the story's very start / very end */
+  const bar=$("#ttsBar");
+  if(bar){
+    bar.hidden=!TTS.playing;
+    if(TTS.playing){
+      const pp=$("#ttsPlayPause");
+      if(pp){
+        pp.querySelector(".ic").textContent=TTS.paused?"▶":"❚❚";
+        pp.querySelector(".lb").textContent=TTS.paused?"Riprendi":"Pausa";
+        pp.setAttribute("aria-label",TTS.paused?"Riprendi la lettura":"Metti in pausa");
+      }
+      const pv=$("#ttsPrevSent"); if(pv)pv.disabled=TTS.idx<=0&&R.chap<=0;
+      const nx=$("#ttsNextSent"); if(nx)nx.disabled=TTS.idx>=TTS.segs.length-1&&R.chap>=R.chs.length-1;
+    }
+  }
 }
 function setListenSheet(open){
   $("#listenPop").hidden=!open; $("#listenScrim").hidden=!open;
@@ -4054,6 +4315,14 @@ $("#listenMain").addEventListener("click",()=>{
   if(TTS.playing&&!TTS.paused)ttsPause(); else ttsPlay();
 });
 $("#listenChev").addEventListener("click",()=>{setAaSheet(false); if(typeof setBmkSheet==="function")setBmkSheet(false); setListenSheet($("#listenPop").hidden)});
+/* the player bar's buttons: the same commands the phone's media
+   notification sends through the Media Session handlers */
+$("#ttsPrevSent").addEventListener("click",()=>ttsStepSentence(-1));
+$("#ttsNextSent").addEventListener("click",()=>ttsStepSentence(1));
+$("#ttsBack10").addEventListener("click",()=>ttsSkipSeconds(-1));
+$("#ttsFwd10").addEventListener("click",()=>ttsSkipSeconds(1));
+$("#ttsPlayPause").addEventListener("click",()=>{if(TTS.playing&&!TTS.paused)ttsPause(); else if(TTS.playing)ttsPlay()});
+$("#ttsStopBtn").addEventListener("click",ttsStop);
 $("#listenScrim").addEventListener("click",()=>setListenSheet(false));
 /* starting from the panel closes the panel: the word «Ascolta»
    leaves the pill, which splits into the quick play/pause and
